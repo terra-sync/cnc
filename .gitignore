@@ -1,9 +1,10 @@
 # Objects
-obj
+*.o
 
 # Executable
 cnc
 
+compile_commands.json
 # Emacs-specific
 # -*- mode: gitignore; -*-
 *~
@@ -15,6 +16,7 @@ auto-save-list
 tramp
 .\#*
 
+.cache/
 # Org-mode
 .org-id-locations
 *_archive

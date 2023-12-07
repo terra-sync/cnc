@@ -1,31 +1,19 @@
-CC = gcc
-CFLAGS = -Wall -g
-TARGET = cnc
+CC?=gcc
+DEBUG ?= 0
+CFLAGS=-Iinclude -Wall -g -DDEBUG=$(DEBUG)
+LDFLAGS=-lcyaml
+DEPS=$(wildcard include/*.h)
+SRC=$(wildcard src/*.c)
+OBJ=$(SRC:src/%.c=%.o)
 
-SRC_DIR = src
-SOURCES = $(wildcard $(SRC_DIR)/*.c)
+%.o: src/%.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS) $(LDFLAGS)
 
-OBJ_DIR = obj
-OBJECTS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SOURCES))
+cnc: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
-all: $(TARGET)
-
-# Rule for creating object files directory
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
-
-# Rule for building the target executable
-$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS)
-
-# Generic rule for compiling any .c file into an .o file in the obj/ directory
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Clean target for removing compiled files
 clean:
-	rm -f $(TARGET)
-	rm -rf $(OBJ_DIR)
+	rm -f *.o cnc
 
-# Phony targets
-.PHONY: all clean
+valgrind: cnc
+	valgrind --leak-check=full ./cnc -f test.yaml
