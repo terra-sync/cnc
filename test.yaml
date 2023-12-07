@@ -1,4 +1,5 @@
 postgres:
+  enabled: true
   host: "localhost"
   user: "postgres"
   password: "password"
