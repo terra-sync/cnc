@@ -32,15 +32,15 @@ int main(int argc, char **argv)
 			free((void *)config_file);
 			return ret;
 		}
+	}
 
 #if DEBUG == 1
-		printf("%s\t%s\t%s\n", yaml_config->postgres_config->host,
-		       yaml_config->postgres_config->user,
-		       yaml_config->postgres_config->database);
+	printf("%s\t%s\t%s\n", yaml_config->postgres_config->host,
+	       yaml_config->postgres_config->user,
+	       yaml_config->postgres_config->database);
 #endif
-		free((void *)config_file);
-		free_config();
-	}
+	free((void *)config_file);
+	free_config();
 
 	return ret;
 }
