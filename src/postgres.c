@@ -23,13 +23,16 @@ int pg_connect(void)
 	const char *keywords[] = { "host", "user",   "password",
 				   "port", "dbname", 0 };
 	// Construct the array that will hold the values of the fields
-	const char *values[5];
+	char *values[5];
 
 	construct_pg_values(values);
-	conn = PQconnectdbParams(keywords, values, 0);
+	conn = PQconnectdbParams(keywords, (const char *const *)values, 0);
 	if (PQstatus(conn) != CONNECTION_OK) {
 		fprintf(stderr, "%s", PQerrorMessage(conn));
 		PQfinish(conn);
+		for (int i = 0; i < 5; i++) {
+			free(values[i]);
+		}
 		ret = -1;
 		return ret;
 	} else if (PQstatus(conn) == CONNECTION_OK) {
@@ -37,17 +40,21 @@ int pg_connect(void)
 	}
 
 	PQfinish(conn);
+	for (int i = 0; i < 5; i++) {
+		free(values[i]);
+	}
+
 	return ret;
 }
 
 /* contruct_pg_values
  * Construct an array with data provided from our configuration.
  */
-void construct_pg_values(const char **values)
+void construct_pg_values(char **values)
 {
-	values[0] = yaml_config->postgres_config->host;
-	values[1] = yaml_config->postgres_config->user;
-	values[2] = yaml_config->postgres_config->password;
-	values[3] = yaml_config->postgres_config->port;
-	values[4] = yaml_config->postgres_config->database;
+	values[0] = strdup(yaml_config->postgres_config->host);
+	values[1] = strdup(yaml_config->postgres_config->user);
+	values[2] = strdup(yaml_config->postgres_config->password);
+	values[3] = strdup(yaml_config->postgres_config->port);
+	values[4] = strdup(yaml_config->postgres_config->database);
 }
