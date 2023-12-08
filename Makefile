@@ -1,7 +1,7 @@
 CC?=gcc
 DEBUG ?= 0
-CFLAGS=-Iinclude -Wall -g -DDEBUG=$(DEBUG)
-LDFLAGS=-lcyaml
+CFLAGS=-Iinclude -I/usr/local/pgsql/include -Wall -g -DDEBUG=$(DEBUG)
+LDFLAGS=-lcyaml -lpq -L/usr/local/pgsql/lib
 DEPS=$(wildcard include/*.h)
 SRC=$(wildcard src/*.c)
 OBJ=$(SRC:src/%.c=%.o)
