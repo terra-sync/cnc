@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "db/postgres.h"
 
 extern config_t *yaml_config;
 
@@ -33,6 +34,7 @@ int main(int argc, char **argv)
 			return ret;
 		}
 	}
+	ret = pg_connect();
 
 #if DEBUG == 1
 	printf("%s\t%s\t%s\n", yaml_config->postgres_config->host,
