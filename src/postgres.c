@@ -3,58 +3,55 @@
 #include <string.h>
 
 #include "libpq-fe.h"
-#include "db/postgres.h"
+
 #include "config.h"
+#include "db/db.h"
+#include "db/postgres.h"
 
 extern config_t *yaml_config;
 
-/*
- * pg_connect
- *
- *  0 Success
- * -1 Database Connection Error
- *
- */
-int pg_connect(void)
+extern struct db_operations **available_dbs;
+
+static struct db_operations pg_db_ops = {
+	.connect = connect_pg,
+	.close = close_pg,
+	.replicate = replicate,
+};
+
+int construct_pg()
 {
-	int ret = 0;
-	PGconn *conn;
-	// Initialize the fields that are to be used to connect to postgres
-	const char *keywords[] = { "host", "user",   "password",
-				   "port", "dbname", 0 };
-	// Construct the array that will hold the values of the fields
-	char *values[5];
+	printf("construct\n");
+	struct db_t *pg_db_t = malloc(sizeof(struct db_t *));
 
-	construct_pg_values(values);
-	conn = PQconnectdbParams(keywords, (const char *const *)values, 0);
-	if (PQstatus(conn) != CONNECTION_OK) {
-		fprintf(stderr, "%s", PQerrorMessage(conn));
-		PQfinish(conn);
-		for (int i = 0; i < 5; i++) {
-			free(values[i]);
-		}
-		ret = -1;
-		return ret;
-	} else if (PQstatus(conn) == CONNECTION_OK) {
-		printf("Ping PostgresDB: Success\n");
-	}
+	pg_db_t->pg_conf = (postgres_t *)malloc(sizeof(postgres_t));
+	memcpy(pg_db_t->pg_conf, yaml_config->postgres_config,
+	       sizeof(postgres_t));
 
-	PQfinish(conn);
-	for (int i = 0; i < 5; i++) {
-		free(values[i]);
-	}
+	pg_db_ops.db = pg_db_t;
+	available_dbs[0] = &pg_db_ops;
 
-	return ret;
+	return 0;
 }
 
-/* contruct_pg_values
- * Construct an array with data provided from our configuration.
- */
-void construct_pg_values(char **values)
+int connect_pg(struct db_t *pg_db_t)
 {
-	values[0] = strdup(yaml_config->postgres_config->host);
-	values[1] = strdup(yaml_config->postgres_config->user);
-	values[2] = strdup(yaml_config->postgres_config->password);
-	values[3] = strdup(yaml_config->postgres_config->port);
-	values[4] = strdup(yaml_config->postgres_config->database);
+	printf("connect\n");
+	printf("%s\n", pg_db_t->pg_conf->host);
+	printf("%s\n", pg_db_t->pg_conf->user);
+	printf("%s\n", pg_db_t->pg_conf->password);
+	return 0;
 }
+
+void close_pg(struct db_t *pg_db_t)
+{
+	printf("close\n");
+	free(pg_db_t->pg_conf);
+}
+
+int replicate(struct db_t *pg_db_t, struct options *pg_options)
+{
+	printf("replicate\n");
+	return 0;
+}
+
+ADD_FUNC(construct_pg);

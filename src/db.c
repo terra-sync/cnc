@@ -14,7 +14,8 @@ int execute_db_operations(void)
 	available_dbs = (struct db_operations **)calloc(
 		MAX_AVAILABLE_DBS, sizeof(struct db_operations **));
 
-	section_foreach_entry(my_array, func_ptr_t, entry) {
+	section_foreach_entry(my_array, init_db_func_ptr_t, entry)
+	{
 		entry->func();
 	}
 

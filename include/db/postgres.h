@@ -1,10 +1,10 @@
 #ifndef DB_POSTGRES_H
 #define DB_POSTGRES_H
 
-#include "config.h"
+#include "db/db.h"
 
-int pg_connect(void);
-void construct_pg_values(char **values);
-void set_info_env(void);
+int connect_pg(struct db_t *);
+void close_pg(struct db_t *pg_db_t);
+int replicate(struct db_t *pg_db_t, struct options *pg_options);
 
 #endif
