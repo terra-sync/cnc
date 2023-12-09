@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 typedef struct postgres_t {
-	bool *enabled;
+	bool enabled;
 	const char *host;
 	const char *user;
 	const char *password;

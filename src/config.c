@@ -6,8 +6,7 @@
 #include <cyaml/cyaml.h>
 
 static const cyaml_schema_field_t postgres_fields_schema[] = {
-	CYAML_FIELD_BOOL_PTR("enabled", CYAML_FLAG_POINTER, postgres_t,
-			     enabled),
+	CYAML_FIELD_BOOL("enabled", CYAML_FLAG_POINTER, postgres_t, enabled),
 	CYAML_FIELD_STRING_PTR("host", CYAML_FLAG_POINTER, postgres_t, host, 0,
 			       CYAML_UNLIMITED),
 	CYAML_FIELD_STRING_PTR("user", CYAML_FLAG_POINTER, postgres_t, user, 0,
