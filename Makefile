@@ -7,7 +7,7 @@ SRC=$(wildcard src/*.c)
 OBJ=$(SRC:src/%.c=%.o)
 
 %.o: src/%.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS) $(LDFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 cnc: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
