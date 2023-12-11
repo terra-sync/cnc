@@ -6,18 +6,29 @@
 #include <cyaml/cyaml.h>
 
 static const cyaml_schema_field_t postgres_fields_schema[] = {
-	CYAML_FIELD_BOOL_PTR("enabled", CYAML_FLAG_POINTER, postgres_t,
-			     enabled),
-	CYAML_FIELD_STRING_PTR("host", CYAML_FLAG_POINTER, postgres_t, host, 0,
-			       CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("user", CYAML_FLAG_POINTER, postgres_t, user, 0,
-			       CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("password", CYAML_FLAG_POINTER, postgres_t,
-			       password, 0, CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("port", CYAML_FLAG_POINTER, postgres_t, port, 0,
-			       CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("database", CYAML_FLAG_POINTER, postgres_t,
-			       database, 0, CYAML_UNLIMITED),
+	CYAML_FIELD_BOOL("enabled", CYAML_FLAG_POINTER, postgres_t, enabled),
+
+	CYAML_FIELD_STRING_PTR("origin_host", CYAML_FLAG_POINTER, postgres_t,
+			       origin_host, 0, CYAML_UNLIMITED),
+	CYAML_FIELD_STRING_PTR("origin_user", CYAML_FLAG_POINTER, postgres_t,
+			       origin_user, 0, CYAML_UNLIMITED),
+	CYAML_FIELD_STRING_PTR("origin_password", CYAML_FLAG_POINTER, postgres_t,
+			       origin_password, 0, CYAML_UNLIMITED),
+	CYAML_FIELD_STRING_PTR("origin_port", CYAML_FLAG_POINTER, postgres_t,
+			       origin_port, 0, CYAML_UNLIMITED),
+	CYAML_FIELD_STRING_PTR("origin_database", CYAML_FLAG_POINTER, postgres_t,
+			       origin_database, 0, CYAML_UNLIMITED),
+
+	CYAML_FIELD_STRING_PTR("target_host", CYAML_FLAG_POINTER, postgres_t,
+			       target_host, 0, CYAML_UNLIMITED),
+	CYAML_FIELD_STRING_PTR("target_user", CYAML_FLAG_POINTER, postgres_t,
+			       target_user, 0, CYAML_UNLIMITED),
+	CYAML_FIELD_STRING_PTR("target_password", CYAML_FLAG_POINTER, postgres_t,
+			       target_password, 0, CYAML_UNLIMITED),
+	CYAML_FIELD_STRING_PTR("target_port", CYAML_FLAG_POINTER, postgres_t,
+			       target_port, 0, CYAML_UNLIMITED),
+	CYAML_FIELD_STRING_PTR("target_database", CYAML_FLAG_POINTER, postgres_t,
+			       target_database, 0, CYAML_UNLIMITED),
 };
 
 static const cyaml_schema_field_t config_fields_schema[] = {
@@ -65,11 +76,18 @@ int initialize_config(const char *config_file)
 
 void free_config(void)
 {
-	free((void *)yaml_config->postgres_config->host);
-	free((void *)yaml_config->postgres_config->user);
-	free((void *)yaml_config->postgres_config->password);
-	free((void *)yaml_config->postgres_config->port);
-	free((void *)yaml_config->postgres_config->database);
+	free((void *)yaml_config->postgres_config->origin_host);
+	free((void *)yaml_config->postgres_config->origin_user);
+	free((void *)yaml_config->postgres_config->origin_password);
+	free((void *)yaml_config->postgres_config->origin_port);
+	free((void *)yaml_config->postgres_config->origin_database);
+
+	free((void *)yaml_config->postgres_config->target_host);
+	free((void *)yaml_config->postgres_config->target_user);
+	free((void *)yaml_config->postgres_config->target_password);
+	free((void *)yaml_config->postgres_config->target_port);
+	free((void *)yaml_config->postgres_config->target_database);
+
 	free(yaml_config->postgres_config);
 	free(yaml_config);
 }

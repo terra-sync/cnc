@@ -52,9 +52,9 @@ int pg_connect(void)
  */
 void construct_pg_values(char **values)
 {
-	values[0] = strdup(yaml_config->postgres_config->host);
-	values[1] = strdup(yaml_config->postgres_config->user);
-	values[2] = strdup(yaml_config->postgres_config->password);
-	values[3] = strdup(yaml_config->postgres_config->port);
-	values[4] = strdup(yaml_config->postgres_config->database);
+	values[0] = strdup(yaml_config->postgres_config->origin_host);
+	values[1] = strdup(yaml_config->postgres_config->origin_user);
+	values[2] = strdup(yaml_config->postgres_config->origin_password);
+	values[3] = strdup(yaml_config->postgres_config->origin_port);
+	values[4] = strdup(yaml_config->postgres_config->origin_database);
 }
