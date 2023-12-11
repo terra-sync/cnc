@@ -1,6 +1,5 @@
 CC?=gcc
-DEBUG ?= 0
-CFLAGS=-Iinclude -I/usr/include/postgresql/ -Wall -g -DDEBUG=$(DEBUG)
+CFLAGS=-Iinclude -I/usr/include/postgresql/ -Wall -g
 LDFLAGS=-lcyaml -lpq
 DEPS=$(wildcard include/*.h)
 SRC=$(wildcard src/*.c)
