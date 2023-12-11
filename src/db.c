@@ -11,6 +11,8 @@ struct db_operations **available_dbs;
 
 int execute_db_operations(void)
 {
+	int ret = 0;
+	struct db_t *available_db;
 	available_dbs = (struct db_operations **)calloc(
 		MAX_AVAILABLE_DBS, sizeof(struct db_operations **));
 
@@ -22,10 +24,13 @@ int execute_db_operations(void)
 	for (int i = 0; i < MAX_AVAILABLE_DBS; i++) {
 		/* do db_operations for all available db impl. */
 		if (available_dbs[i] != NULL) {
-			struct db_t *available_db = available_dbs[i]->db;
-			available_dbs[i]->connect(available_db);
-			available_dbs[i]->close(available_db);
+			available_db = available_dbs[i]->db;
+			ret = available_dbs[i]->connect(available_db);
+			if (ret != 0) {
+				available_dbs[i]->close(available_db);
+			}
 			available_dbs[i]->replicate(available_db, NULL);
+			available_dbs[i]->close(available_db);
 			free(available_db);
 		}
 	}

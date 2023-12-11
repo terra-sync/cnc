@@ -21,7 +21,7 @@ static struct db_operations pg_db_ops = {
 int construct_pg()
 {
 	printf("construct\n");
-	struct db_t *pg_db_t = malloc(sizeof(struct db_t *));
+	struct db_t *pg_db_t = (struct db_t *)malloc(sizeof(struct db_t));
 
 	pg_db_t->pg_conf = (postgres_t *)malloc(sizeof(postgres_t));
 	memcpy(pg_db_t->pg_conf, yaml_config->postgres_config,
@@ -35,16 +35,27 @@ int construct_pg()
 
 int connect_pg(struct db_t *pg_db_t)
 {
-	printf("connect\n");
-	printf("%s\n", pg_db_t->pg_conf->origin_host);
-	printf("%s\n", pg_db_t->pg_conf->origin_user);
-	printf("%s\n", pg_db_t->pg_conf->origin_password);
-	return 0;
+	int ret = 0;
+	// Initialize the fields that are to be used to connect to postgres
+	const char *keywords[] = { "host", "user",   "password",
+				   "port", "dbname", 0 };
+	// Construct the array that will hold the values of the fields
+	const char *values[] = { pg_db_t->pg_conf->origin_host, pg_db_t->pg_conf->origin_user,
+				 pg_db_t->pg_conf->origin_password,
+				 pg_db_t->pg_conf->origin_port,
+				 pg_db_t->pg_conf->origin_database };
+
+	pg_db_t->host_conn = PQconnectdbParams(keywords, values, 0);
+	if (PQstatus(pg_db_t->host_conn) != CONNECTION_OK) {
+		fprintf(stderr, "%s", PQerrorMessage(pg_db_t->host_conn));
+		ret = -1;
+	}
+	return ret;
 }
 
 void close_pg(struct db_t *pg_db_t)
 {
-	printf("close\n");
+	PQfinish(pg_db_t->host_conn);
 	free(pg_db_t->pg_conf);
 }
 
