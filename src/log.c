@@ -4,3 +4,8 @@
 #include <stdio.h>
 
 bool verbose;
+
+bool get_verbose(void)
+{
+	return verbose;
+}

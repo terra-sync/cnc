@@ -10,9 +10,11 @@
  * the Linux Kernel.
 */
 #define pr_info(...)                                       \
-	if (verbose) {                                     \
+	if (get_verbose()) {                               \
 		fprintf(stdout, "VERBOSE:%s\t", __func__); \
 		fprintf(stdout, __VA_ARGS__);              \
 	}
+
+bool get_verbose(void);
 
 #endif
