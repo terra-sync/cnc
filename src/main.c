@@ -1,16 +1,19 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <getopt.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "config.h"
-#include "db/postgres.h"
 #include "db/db.h"
+#include "log.h"
 
 extern config_t *yaml_config;
+extern bool verbose;
 
 static struct option options[] = {
 	{ "config-file", required_argument, 0, 'f' },
+	{ "verbose", no_argument, 0, 'v' },
 };
 
 int main(int argc, char **argv)
@@ -19,11 +22,14 @@ int main(int argc, char **argv)
 	int c;
 	char *config_file = NULL;
 
-	while ((c = getopt_long(argc, argv, "f:", options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "f:v", options, NULL)) != -1) {
 		switch (c) {
 		case 'f':
 			config_file = strdup(optarg);
 			printf("%s\n", config_file);
+			break;
+		case 'v':
+			verbose = true;
 			break;
 		}
 	}
@@ -38,11 +44,6 @@ int main(int argc, char **argv)
 
 	ret = execute_db_operations();
 
-#if DEBUG == 1
-	printf("%s\t%s\t%s\n", yaml_config->postgres_config->host,
-	       yaml_config->postgres_config->user,
-	       yaml_config->postgres_config->database);
-#endif
 	free((void *)config_file);
 	free_config();
 

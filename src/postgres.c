@@ -36,9 +36,9 @@ int construct_pg()
 int connect_pg(struct db_t *pg_db_t)
 {
 	printf("connect\n");
-	printf("%s\n", pg_db_t->pg_conf->host);
-	printf("%s\n", pg_db_t->pg_conf->user);
-	printf("%s\n", pg_db_t->pg_conf->password);
+	printf("%s\n", pg_db_t->pg_conf->origin_host);
+	printf("%s\n", pg_db_t->pg_conf->origin_user);
+	printf("%s\n", pg_db_t->pg_conf->origin_password);
 	return 0;
 }
 

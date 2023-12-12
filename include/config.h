@@ -5,11 +5,18 @@
 
 typedef struct postgres_t {
 	bool enabled;
-	const char *host;
-	const char *user;
-	const char *password;
-	const char *port;
-	const char *database;
+
+	const char *origin_host;
+	const char *origin_user;
+	const char *origin_password;
+	const char *origin_port;
+	const char *origin_database;
+
+	const char *target_host;
+	const char *target_user;
+	const char *target_password;
+	const char *target_port;
+	const char *target_database;
 } postgres_t;
 
 typedef struct config_t {
