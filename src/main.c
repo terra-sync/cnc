@@ -12,8 +12,8 @@ extern config_t *yaml_config;
 extern bool verbose;
 
 static struct option options[] = {
-	{ "config-file", required_argument, 0, 'f' },
-	{ "verbose", no_argument, 0, 'v' },
+	{ "config-file", required_argument, NULL, 'f' },
+	{ "verbose", no_argument, NULL, 'v' },
 };
 
 int main(int argc, char **argv)

@@ -1,5 +1,6 @@
 #include "db/db.h"
 #include "db/postgres.h"
+
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -28,12 +29,15 @@ int execute_db_operations(void)
 			ret = available_dbs[i]->connect(available_db);
 			if (ret != 0) {
 				available_dbs[i]->close(available_db);
+				return ret;
 			}
 			available_dbs[i]->replicate(available_db, NULL);
 			available_dbs[i]->close(available_db);
-			free(available_db);
 		}
 	}
+
+	free(available_db);
+	free(available_dbs);
 
 	return 0;
 }
