@@ -9,7 +9,7 @@
  * "pr_..." is inspired by pr_{info|warn|error} of
  * the Linux Kernel.
 */
-#define pr_info(...)                                       \
+#define pr_debug(...)                                      \
 	if (get_verbose()) {                               \
 		fprintf(stdout, "VERBOSE:%s\t", __func__); \
 		fprintf(stdout, __VA_ARGS__);              \
