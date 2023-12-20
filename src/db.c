@@ -38,11 +38,9 @@ int execute_db_operations(void)
 		if (available_dbs[i] != NULL) {
 			available_db = available_dbs[i]->db;
 			ret = available_dbs[i]->connect(available_db);
-			if (ret != 0) {
-				available_dbs[i]->close(available_db);
-				return ret;
+			if (ret == 0) {
+				available_dbs[i]->replicate(available_db);
 			}
-			available_dbs[i]->replicate(available_db);
 			available_dbs[i]->close(available_db);
 		}
 	}

@@ -18,6 +18,7 @@
  *  Returns:
  *  0 on success
  * -1 error opening file
+ * -2 database system is disabled
  * -ENOMEM Error allocating memory
  *
  */

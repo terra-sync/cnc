@@ -1,9 +1,8 @@
-#include "config.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <ini.h>
 
+#include "config.h"
 #include "log.h"
 #include "util.h"
 
@@ -112,6 +111,63 @@ int handler(void *user, const char *section, const char *name,
 			return 0;
 		}
 	}
+	
+	if (CHECK_SECTION("mongodb")) {
+		if (MATCH("mongodb", "enabled")) {
+			if (strcmp("true", value) == 0) {
+				ini_config->mongodb_config->enabled = true;
+			} else if (strcmp("false", value) == 0) {
+				ini_config->mongodb_config->enabled = false;
+			} else {
+				pr_error(
+					"Accepted `enabled` values are \"true\" or \"false \".\n");
+				return 0;
+			}
+		} else if (MATCH("mongodb", "origin_host")) {
+			ini_config->mongodb_config->host.origin =
+				strdup(value);
+		} else if (MATCH("mongodb", "origin_user")) {
+			ini_config->mongodb_config->user.origin =
+				strdup(value);
+		} else if (MATCH("mongodb", "origin_password")) {
+			ini_config->mongodb_config->password.origin =
+				strdup(value);
+		} else if (MATCH("mongodb", "origin_port")) {
+			ini_config->mongodb_config->port.origin =
+				strdup(value);
+		} else if (MATCH("mongodb", "origin_database")) {
+			ini_config->mongodb_config->database.origin =
+				strdup(value);
+		} else if (MATCH("mongodb", "target_host")) {
+			ini_config->mongodb_config->host.target =
+				strdup(value);
+		} else if (MATCH("mongodb", "target_user")) {
+			ini_config->mongodb_config->user.target =
+				strdup(value);
+		} else if (MATCH("mongodb", "target_password")) {
+			ini_config->mongodb_config->password.target =
+				strdup(value);
+		} else if (MATCH("mongodb", "target_port")) {
+			ini_config->mongodb_config->port.target =
+				strdup(value);
+		} else if (MATCH("mongodb", "target_database")) {
+			ini_config->mongodb_config->database.target =
+				strdup(value);
+		} else if (MATCH("mongodb", "email")) {
+			if (strcmp("true", value) == 0) {
+				ini_config->mongodb_config->email = true;
+			} else if (strcmp("false", value) == 0) {
+				ini_config->mongodb_config->email = false;
+			} else {
+				pr_error(
+					"Accepted `enabled` values are \"true\" or \"false\".\n");
+				return 0;
+			}
+		} else {
+			return 0;
+		}
+	}
+
 
 	// SMTP
 	if (CHECK_SECTION("smtp")) {
@@ -167,6 +223,7 @@ int initialize_config(const char *config_file)
 
 	ini_config = CNC_MALLOC(sizeof(config_t));
 	ini_config->postgres_config = CNC_MALLOC(sizeof(postgres_t));
+	ini_config->mongodb_config = CNC_MALLOC(sizeof(mongodb_t));
 	ini_config->smtp_config = CNC_MALLOC(sizeof(smtp_t));
 	ini_config->general_config = CNC_MALLOC(sizeof(general_t));
 	ini_config->general_config->log_filepath = NULL;

@@ -34,6 +34,7 @@ extern int num_init_functions;
  */
 struct db_t {
 	postgres_t *pg_conf;
+	mongodb_t *mongodb_conf;
 
 	void *origin_conn;
 	void *target_conn;
