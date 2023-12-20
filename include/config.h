@@ -27,6 +27,19 @@ typedef struct postgres_t {
 	bool email;
 } postgres_t;
 
+
+typedef struct mongodb_t {
+	bool enabled;
+
+	d_str_t host;
+	d_str_t user;
+	d_str_t password;
+	d_str_t port;
+	d_str_t database;
+
+	bool email;
+} mongodb_t;
+
 typedef enum auth_mode_t {
 	SSL = 1,
 	TLS,
@@ -54,6 +67,7 @@ typedef struct general_t {
 
 typedef struct config_t {
 	postgres_t *postgres_config;
+	mongodb_t *mongodb_config;
 	smtp_t *smtp_config;
 	general_t *general_config;
 } config_t;
