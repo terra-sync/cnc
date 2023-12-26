@@ -1,6 +1,6 @@
 CC?=gcc
 CFLAGS=-Iinclude -I/usr/include/postgresql/ -Wall -g
-LDFLAGS=-lcyaml -lpq
+LDFLAGS=-linih -lpq
 DEPS=$(wildcard include/*.h)
 SRC=$(wildcard src/*.c)
 OBJ=$(SRC:src/%.c=%.o)
@@ -15,4 +15,4 @@ clean:
 	rm -f *.o cnc
 
 valgrind: cnc
-	valgrind --leak-check=full ./cnc -f test.yaml
+	valgrind --leak-check=full ./cnc -f test.ini

@@ -8,7 +8,7 @@
 #include "db/db.h"
 #include "log.h"
 
-extern config_t *yaml_config;
+extern config_t *ini_config;
 extern bool verbose;
 
 static struct option options[] = {

@@ -16,7 +16,7 @@
 #define READ_END 0
 #define WRITE_END 1
 
-extern config_t *yaml_config;
+extern config_t *ini_config;
 
 extern struct db_operations **available_dbs;
 
@@ -31,7 +31,7 @@ int construct_pg(void)
 	struct db_t *pg_db_t = (struct db_t *)malloc(sizeof(struct db_t));
 
 	pg_db_t->pg_conf = (postgres_t *)malloc(sizeof(postgres_t));
-	memcpy(pg_db_t->pg_conf, yaml_config->postgres_config,
+	memcpy(pg_db_t->pg_conf, ini_config->postgres_config,
 	       sizeof(postgres_t));
 
 	pg_db_ops.db = pg_db_t;

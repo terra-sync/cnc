@@ -3,50 +3,53 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <cyaml/cyaml.h>
+#include <ini.h>
 
-static const cyaml_schema_field_t postgres_fields_schema[] = {
-	CYAML_FIELD_BOOL("enabled", CYAML_FLAG_DEFAULT, postgres_t, enabled),
+#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
 
-	CYAML_FIELD_STRING_PTR("origin_host", CYAML_FLAG_POINTER, postgres_t,
-			       origin_host, 0, CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("origin_user", CYAML_FLAG_POINTER, postgres_t,
-			       origin_user, 0, CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("origin_password", CYAML_FLAG_POINTER,
-			       postgres_t, origin_password, 0, CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("origin_port", CYAML_FLAG_POINTER, postgres_t,
-			       origin_port, 0, CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("origin_database", CYAML_FLAG_POINTER,
-			       postgres_t, origin_database, 0, CYAML_UNLIMITED),
+config_t *ini_config;
 
-	CYAML_FIELD_STRING_PTR("target_host", CYAML_FLAG_POINTER, postgres_t,
-			       target_host, 0, CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("target_user", CYAML_FLAG_POINTER, postgres_t,
-			       target_user, 0, CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("target_password", CYAML_FLAG_POINTER,
-			       postgres_t, target_password, 0, CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("target_port", CYAML_FLAG_POINTER, postgres_t,
-			       target_port, 0, CYAML_UNLIMITED),
-	CYAML_FIELD_STRING_PTR("target_database", CYAML_FLAG_POINTER,
-			       postgres_t, target_database, 0, CYAML_UNLIMITED),
-};
+static int handler(void *user, const char *section, const char *name,
+		   const char *value)
+{
+	postgres_t *postgres_config = (postgres_t *)user;
 
-static const cyaml_schema_field_t config_fields_schema[] = {
-	CYAML_FIELD_MAPPING_PTR("postgres", CYAML_FLAG_POINTER, config_t,
-				postgres_config, postgres_fields_schema),
-};
+	if (MATCH("postgres", "enabled")) {
+		if (strcmp(value, "true") == 0)
+			postgres_config->enabled = true;
+		else
+			postgres_config->enabled = false;
+	}
 
-static const cyaml_schema_value_t config_schema = {
-	CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, config_t, config_fields_schema),
-};
+	// Origin
+	if (MATCH("postgres", "origin_host")) {
+		postgres_config->origin_host = strdup(value);
+	} else if (MATCH("postgres", "origin_user")) {
+		postgres_config->origin_user = strdup(value);
+		printf("%s\n", postgres_config->origin_user);
+	} else if (MATCH("postgres", "origin_password")) {
+		postgres_config->origin_password = strdup(value);
+	} else if (MATCH("postgres", "origin_port")) {
+		postgres_config->origin_port = strdup(value);
+	} else if (MATCH("postgres", "origin_database")) {
+		postgres_config->origin_database = strdup(value);
+	}
 
-static const cyaml_config_t config = {
-	.log_fn = cyaml_log, /* Use the default logging function. */
-	.mem_fn = cyaml_mem, /* Use the default memory allocator. */
-	.log_level = CYAML_LOG_WARNING, /* Logging errors and warnings only. */
-};
+	// Target
+	if (MATCH("postgres", "target_host")) {
+		postgres_config->target_host = strdup(value);
+	} else if (MATCH("postgres", "target_user")) {
+		postgres_config->target_user = strdup(value);
+	} else if (MATCH("postgres", "target_password")) {
+		postgres_config->target_password = strdup(value);
+	} else if (MATCH("postgres", "target_port")) {
+		postgres_config->target_port = strdup(value);
+	} else if (MATCH("postgres", "target_database")) {
+		postgres_config->target_database = strdup(value);
+	}
 
-config_t *yaml_config;
+	return 1;
+}
 
 /* 
  * initialize_config
@@ -59,35 +62,35 @@ config_t *yaml_config;
 int initialize_config(const char *config_file)
 {
 	int ret = 0;
-	enum cyaml_err err;
-	err = cyaml_load_file(config_file, &config, &config_schema,
-			      (void **)&yaml_config, NULL);
-	if (err != CYAML_OK) {
-		if (err == CYAML_ERR_FILE_OPEN)
-			ret = -1;
-		fprintf(stderr, "ERROR: %s\n", cyaml_strerror(err));
-		ret = -2;
+	postgres_t postgres_config;
 
-		return ret;
+	ini_config = (config_t *)malloc(sizeof(config_t));
+	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+
+	if (ini_parse("test.ini", handler, &postgres_config) < 0) {
+		return -1;
 	}
+
+	memcpy(ini_config->postgres_config, &postgres_config,
+	       sizeof(postgres_t));
 
 	return ret;
 }
 
 void free_config(void)
 {
-	free((void *)yaml_config->postgres_config->origin_host);
-	free((void *)yaml_config->postgres_config->origin_user);
-	free((void *)yaml_config->postgres_config->origin_password);
-	free((void *)yaml_config->postgres_config->origin_port);
-	free((void *)yaml_config->postgres_config->origin_database);
+	free((void *)ini_config->postgres_config->origin_host);
+	free((void *)ini_config->postgres_config->origin_user);
+	free((void *)ini_config->postgres_config->origin_password);
+	free((void *)ini_config->postgres_config->origin_port);
+	free((void *)ini_config->postgres_config->origin_database);
 
-	free((void *)yaml_config->postgres_config->target_host);
-	free((void *)yaml_config->postgres_config->target_user);
-	free((void *)yaml_config->postgres_config->target_password);
-	free((void *)yaml_config->postgres_config->target_port);
-	free((void *)yaml_config->postgres_config->target_database);
+	free((void *)ini_config->postgres_config->target_host);
+	free((void *)ini_config->postgres_config->target_user);
+	free((void *)ini_config->postgres_config->target_password);
+	free((void *)ini_config->postgres_config->target_port);
+	free((void *)ini_config->postgres_config->target_database);
 
-	free(yaml_config->postgres_config);
-	free(yaml_config);
+	free(ini_config->postgres_config);
+	free(ini_config);
 }
