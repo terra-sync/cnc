@@ -19,8 +19,22 @@ typedef struct postgres_t {
 	const char *target_database;
 } postgres_t;
 
+typedef enum auth_mode_t {
+	SSL = 1,
+	TLS,
+} auth_mode_t;
+
+typedef struct smtp_t {
+	const char *username;
+	const char *password;
+	const char *smtp_host;
+	const char *smtp_port;
+	auth_mode_t auth_mode;
+} smtp_t;
+
 typedef struct config_t {
 	postgres_t *postgres_config;
+	smtp_t *smtp_config;
 } config_t;
 
 int initialize_config(const char *config_file);
