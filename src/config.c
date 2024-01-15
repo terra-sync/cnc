@@ -122,6 +122,7 @@ void free_config(void)
 
 	free((void *)ini_config->smtp_config->username);
 	free((void *)ini_config->smtp_config->password);
+	free((void *)ini_config->smtp_config->smtp_port);
 	free((void *)ini_config->smtp_config->smtp_host);
 
 	free(ini_config->smtp_config);
