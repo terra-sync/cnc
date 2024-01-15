@@ -102,196 +102,36 @@ void close_pg(struct db_t *pg_db_t)
 	free(pg_db_t->pg_conf);
 }
 
-/*
- * replicate
- *  Construct the variables and arguments that will be used for the
- * `pg_dump` and `pg_fork`, then call the `execve_binary` to execute
- *  the commands.
- *
- * Returns:
- *   0 Success
- *  -1 Failure of`pg_dump` or `pg_restore`
- *  -2 Failure of creation of fork() or pipe()
- *
- */
-int replicate(struct db_t *pg_db_t, struct options *pg_options)
+void setup_command(char **pg_command_path, char **pg_pass, const char *command,
+		   const char *password, const char *command_path,
+		   int command_path_size, int command_size)
 {
-	int ret = 0;
+	int pg_pass_size = PG_PASS_PREFIX + strlen(password) + 1;
 
-	/*
-	 * Setting up the password and command sizes as variables to
-	 * avoid multiple uses of strlen().
-	 */
-	int pg_pass_size =
-		PG_PASS_PREFIX + strlen(pg_db_t->pg_conf->origin_password) + 1;
-	int pg_command_size = strlen(PG_DUMP_COMMAND);
+	*pg_pass = realloc(*pg_pass, pg_pass_size * sizeof(char));
+	strcpy(*pg_pass, "PGPASSWORD=");
+	strcat(*pg_pass, password);
 
-	/*
-	 * These will be used as an environmental variable for `pg_dump` and `pg_restore`.
-	 * The format of the passed variables is `PGPASSWORD=<password>`.
-	 */
-	char *pg_pass = calloc(pg_pass_size, sizeof(char));
+	*pg_command_path =
+		realloc(*pg_command_path,
+			(command_path_size + command_size + 1) * sizeof(char));
+	strncpy(*pg_command_path, command_path,
+		command_path_size + command_size + 1);
+	strcat(*pg_command_path, command);
+}
 
-	/*
-	 * The max length of the array is 261 because 255 is the max length of
-	 * the acceptable filepath by Linux. Our string is of the format
-	 * `PATH=/path/to/pg_command` therefore we also need 5 characters for
-	 * `PATH=` + 1 for '\0'.
-	 */
-	char *pg_bin, prefixed_command_path[261] = "PATH=";
-
-	/*
-	 * Set this as the default command for Debian-based distributions. The array
-	 * should potentially hold the max length of the filepath because it might be
-	 * overwritten if the user has specified the $PG_BIN environmental variable.
-	 */
-	char command_path[255] = "/usr/bin/";
-	int command_path_size = strlen(command_path);
-	char *pg_command_path;
-
-	/*
-	 * This is `$HOME/backup.dump and will be used as the path for the output
-	 * of `pg_dump` and the input of the `pg_restore`.
-	 */
-	char backup_path[255] = { 0 };
-
-	char *const dump_args[] = {
-		PG_DUMP_COMMAND,
-		"-h",
-		(char *const)pg_db_t->pg_conf->origin_host,
-		"-F",
-		"custom",
-		"-p",
-		(char *const)pg_db_t->pg_conf->origin_port,
-		"-U",
-		(char *const)pg_db_t->pg_conf->origin_user,
-		"-d",
-		(char *const)pg_db_t->pg_conf->origin_database,
-		"-f",
-		backup_path,
-		"-v",
-		NULL
-	};
-	char *const restore_args[] = {
-		PG_RESTORE_COMMAND,
-		"-h",
-		(char *const)pg_db_t->pg_conf->target_host,
-		"-p",
-		(char *const)pg_db_t->pg_conf->target_port,
-		"-U",
-		(char *const)pg_db_t->pg_conf->target_user,
-		"-d",
-		(char *const)pg_db_t->pg_conf->target_database,
-		backup_path,
-		"-v",
-		NULL
-	};
-
-	char const *command_envp[3];
-
-	construct_dump_path(backup_path);
-
-	strcpy(pg_pass, "PGPASSWORD=");
-	strcat(pg_pass, (char *)pg_db_t->pg_conf->origin_password);
-
-	pr_debug("Checking if $PG_BIN environmental variable.\n");
-	pg_bin = getenv("PG_BIN");
-	if (pg_bin) {
-		pr_debug("$PG_BIN=%s was found.\n", pg_bin);
-		command_path_size = strlen(pg_bin);
-		strncat(prefixed_command_path, pg_bin, command_path_size);
-		stpncpy(command_path, pg_bin, strlen(prefixed_command_path));
-	} else {
-		pr_debug(
-			"$PG_BIN was not found, default path %s will be used.\n",
-			command_path);
-		strncat(prefixed_command_path, command_path,
-			command_path_size + 1);
-	}
-
-	pg_command_path = calloc(command_path_size + pg_command_size + 1,
-				 (command_path_size + pg_command_size + 1) *
-					 sizeof(char));
-	strncpy(pg_command_path, command_path, command_path_size);
-	strncat(pg_command_path, PG_DUMP_COMMAND, pg_command_size + 1);
-
-	command_envp[0] = pg_pass;
-	command_envp[1] = prefixed_command_path;
-	command_envp[2] = NULL;
-
-	/*
-	 * The replication process is achieved by using a fork() for `pg_dump`
-	 * and another fork() for `pg_restore`.
-	 */
-	pr_debug("Starting `pg_dump` process.\n");
-	ret = execve_binary(pg_command_path, dump_args,
-			    (char *const *)command_envp);
+int exec_command(const char *pg_command_path, char *const args[], char *pg_pass,
+		 char *prefixed_command_path)
+{
+	char const *command_envp[3] = { pg_pass, prefixed_command_path, NULL };
+	int ret = execve_binary((char *)pg_command_path, args,
+				(char *const *)command_envp);
 
 	if (ret != 0) {
-		printf("`%s` failed\n", PG_DUMP_COMMAND);
-		free(pg_command_path);
-		free(pg_pass);
-		return ret;
+		printf("`%s` failed\n", args[0]);
 	}
-
-	/* Reassign the variables with the values for the `pg_restore` command.
-	 * This is the same steps used previously for `pg_dump`.
-	 */
-	pg_pass_size =
-		PG_PASS_PREFIX + strlen(pg_db_t->pg_conf->target_password) + 1;
-	pg_command_size = strlen(PG_RESTORE_COMMAND);
-	pg_pass = realloc(pg_pass, pg_pass_size * sizeof(char));
-
-	strcpy(pg_pass, "PGPASSWORD=");
-	strcat(pg_pass, (char *)pg_db_t->pg_conf->target_password);
-
-	pg_command_path = realloc(pg_command_path,
-				  (command_path_size + pg_command_size + 1) *
-					  sizeof(char));
-
-	strncpy(pg_command_path, command_path,
-		command_path_size + pg_command_size + 1);
-	strncat(pg_command_path, PG_RESTORE_COMMAND, pg_command_size + 1);
-
-	command_envp[0] = pg_pass;
-	command_envp[1] = prefixed_command_path;
-	command_envp[2] = NULL;
-
-	pr_debug("Starting `pg_restore` process.\n");
-	ret = execve_binary(pg_command_path, restore_args,
-			    (char *const *)command_envp);
-
-	if (ret != 0) {
-		printf("`%s` failed\n", PG_RESTORE_COMMAND);
-		free(pg_command_path);
-		free(pg_pass);
-		return ret;
-	}
-
-	free(pg_command_path);
-	free(pg_pass);
-	printf("Database Replication was successful!\n");
 
 	return ret;
-}
-
-void construct_dump_path(char *path)
-{
-	char *home_path = getenv("HOME");
-	int home_path_size = strlen(home_path);
-	strncpy(path, home_path, home_path_size);
-	strcat(path, "/backup.dump");
-}
-
-void read_buffer_pipe(int *pipefd)
-{
-	char buffer[4096] = { 0 };
-	int nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
-	while (nbytes > 0) {
-		printf("%s", buffer);
-		memset(buffer, 0, sizeof(buffer));
-		nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
-	}
 }
 
 /*
@@ -349,6 +189,115 @@ int execve_binary(char *command_path, char *const command_args[],
 	}
 
 	return 0;
+}
+
+/*
+ * replicate
+ *  Construct the variables and arguments that will be used for the
+ * `pg_dump` and `pg_fork`, then call the `execve_binary` to execute
+ *  the commands.
+ *
+ * Returns:
+ *   0 Success
+ *  -1 Failure of`pg_dump` or `pg_restore`
+ *  -2 Failure of creation of fork() or pipe()
+ *
+ */
+int replicate(struct db_t *pg_db_t, struct options *pg_options)
+{
+	int ret = 0;
+	char *pg_pass = NULL;
+	char *pg_command_path = NULL;
+	char backup_path[255] = { 0 };
+	char *pg_bin, prefixed_command_path[261] = "PATH=";
+	char command_path[255] = "/usr/bin/";
+	int command_path_size = strlen(command_path);
+
+	char *const dump_args[] = {
+		PG_DUMP_COMMAND,
+		"-h",
+		(char *const)pg_db_t->pg_conf->origin_host,
+		"-F",
+		"custom",
+		"-p",
+		(char *const)pg_db_t->pg_conf->origin_port,
+		"-U",
+		(char *const)pg_db_t->pg_conf->origin_user,
+		"-d",
+		(char *const)pg_db_t->pg_conf->origin_database,
+		"-f",
+		backup_path,
+		"-v",
+		NULL
+	};
+
+	char *const restore_args[] = {
+		PG_RESTORE_COMMAND,
+		"-h",
+		(char *const)pg_db_t->pg_conf->target_host,
+		"-p",
+		(char *const)pg_db_t->pg_conf->target_port,
+		"-U",
+		(char *const)pg_db_t->pg_conf->target_user,
+		"-d",
+		(char *const)pg_db_t->pg_conf->target_database,
+		backup_path,
+		"-v",
+		NULL
+	};
+
+	construct_dump_path(backup_path);
+
+	pr_debug("Checking if $PG_BIN environmental variable.\n");
+	pg_bin = getenv("PG_BIN");
+	if (pg_bin) {
+		pr_debug("$PG_BIN=%s was found.\n", pg_bin);
+		command_path_size = strlen(pg_bin);
+		strncpy(command_path, pg_bin, command_path_size);
+	}
+	strncat(prefixed_command_path, command_path, command_path_size + 1);
+
+	setup_command(&pg_command_path, &pg_pass, PG_DUMP_COMMAND,
+		      pg_db_t->pg_conf->origin_password, command_path,
+		      command_path_size, strlen(PG_DUMP_COMMAND));
+	ret = exec_command(pg_command_path, dump_args, pg_pass,
+			   prefixed_command_path);
+	if (ret != 0)
+		goto cleanup;
+
+	setup_command(&pg_command_path, &pg_pass, PG_RESTORE_COMMAND,
+		      pg_db_t->pg_conf->target_password, command_path,
+		      command_path_size, strlen(PG_RESTORE_COMMAND));
+	ret = exec_command(pg_command_path, restore_args, pg_pass,
+			   prefixed_command_path);
+	if (ret != 0)
+		goto cleanup;
+
+	printf("Database Replication was successful!\n");
+
+cleanup:
+	free(pg_command_path);
+	free(pg_pass);
+	return ret;
+}
+
+void construct_dump_path(char *path)
+{
+	char *home_path = getenv("HOME");
+	int home_path_size = strlen(home_path);
+	strncpy(path, home_path, home_path_size);
+	strcat(path, "/backup.dump");
+}
+
+void read_buffer_pipe(int *pipefd)
+{
+	char buffer[4096] = { 0 };
+	int nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
+	while (nbytes > 0) {
+		printf("%s", buffer);
+		memset(buffer, 0, sizeof(buffer));
+		nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
+	}
 }
 
 ADD_FUNC(construct_pg);
