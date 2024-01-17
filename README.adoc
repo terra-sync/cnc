@@ -1,1 +1,27 @@
-= cnc
+:doctype: article
+:revnumber: 1.0
+:revdate: January 17, 2024
+:toc: left
+:toclevels: 2
+:icons: font
+
+= CNC
+
+== What is it?
+
+CNC is a project written in C that allows users to replicate databases from a host to a target system. It utilizes .ini files to specify the host and target databases and performs replication through dump and restore actions. Currently only PostgreSQL is supported but the tool is designed to be extended for other database systems in the future.
+
+== Why?
+
+CNC simplifies the process of database replication, especially in cloud environments. It addresses the needs of DevOps teams by automating and streamlining the replication process, reducing manual intervention and potential for errors.
+
+== Authors
+
+* Charalampos Mitrodimas (charmitro@terrasync.net | charmitro@posteo.net)
+* Panagiotis Foliadis (pfoladis@terrasync.net | pfoliadis@hotmail.com)
+
+== How to Contribute
+
+Refer to `CONTRIBUTING.adoc`.
+
+*Contributions can be submitted via GitHub pull requests.*
