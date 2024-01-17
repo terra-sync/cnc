@@ -36,10 +36,22 @@ int main(int argc, char **argv)
 
 	if (config_file != NULL) {
 		ret = initialize_config(config_file);
-		if (ret != 0) {
-			free((void *)config_file);
-			return ret;
+		if (ret < 0) {
+			if (ret == -1) {
+				fprintf(stderr,
+					"Config: Error opening `.ini` file");
+			} else if (ret == -2) {
+				fprintf(stderr,
+					"Config: Error allocating memory");
+			}
+		} else if (ret > 0) {
+			fprintf(stderr,
+				"Error parsing line: %d. Please check your `.ini.` file\n",
+				ret);
 		}
+		free((void *)config_file);
+		free_config();
+		return ret;
 	}
 
 	ret = execute_db_operations();

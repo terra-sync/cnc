@@ -46,6 +46,7 @@ int construct_pg(void)
  * Returns: 
  *   0 Success
  *  -1 Failure to connect
+ *  -2 Not enabled
  */
 int connect_pg(struct db_t *pg_db_t)
 {
@@ -56,6 +57,12 @@ int connect_pg(struct db_t *pg_db_t)
 	 */
 	pg_db_t->origin_conn = NULL;
 	pg_db_t->target_conn = NULL;
+
+	// Check if the database is `enabled` before attempting to connect
+	if (!pg_db_t->pg_conf->enabled) {
+		ret = -2;
+		return ret;
+	}
 
 	// Initialize the fields that are to be used to connect to postgres.
 	const char *keywords[] = { "host", "user",   "password",

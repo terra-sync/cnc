@@ -21,10 +21,7 @@ static int handler(void *user, const char *section, const char *name,
 				ini_config->postgres_config->enabled = true;
 			else
 				ini_config->postgres_config->enabled = false;
-		}
-
-		// Origin
-		if (MATCH("postgres", "origin_host")) {
+		} else if (MATCH("postgres", "origin_host")) {
 			ini_config->postgres_config->origin_host =
 				strdup(value);
 		} else if (MATCH("postgres", "origin_user")) {
@@ -41,10 +38,7 @@ static int handler(void *user, const char *section, const char *name,
 		} else if (MATCH("postgres", "origin_database")) {
 			ini_config->postgres_config->origin_database =
 				strdup(value);
-		}
-
-		// Target
-		if (MATCH("postgres", "target_host")) {
+		} else if (MATCH("postgres", "target_host")) {
 			ini_config->postgres_config->target_host =
 				strdup(value);
 		} else if (MATCH("postgres", "target_user")) {
@@ -59,6 +53,8 @@ static int handler(void *user, const char *section, const char *name,
 		} else if (MATCH("postgres", "target_database")) {
 			ini_config->postgres_config->target_database =
 				strdup(value);
+		} else {
+			return 0;
 		}
 	}
 
@@ -87,9 +83,9 @@ static int handler(void *user, const char *section, const char *name,
  * initialize_config
  *
  *   0 Success
- *  -1 Error reading file
- *  -2 Error parsing file
- *
+ *  -1 Error opening File
+ *  -2 Error allocating Memory
+ *  >0 Number of line with parsing error
  */
 int initialize_config(const char *config_file)
 {
@@ -98,10 +94,7 @@ int initialize_config(const char *config_file)
 	ini_config = (config_t *)malloc(sizeof(config_t));
 	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
 	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
-
-	if (ini_parse("test.ini", handler, ini_config) < 0) {
-		return -1;
-	}
+	ret = ini_parse("test.ini", handler, ini_config);
 
 	return ret;
 }
