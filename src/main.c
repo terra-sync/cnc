@@ -49,9 +49,6 @@ int main(int argc, char **argv)
 				"Error parsing line: %d. Please check your `.ini.` file\n",
 				ret);
 		}
-		free((void *)config_file);
-		free_config();
-		return ret;
 	}
 
 	ret = execute_db_operations();

@@ -27,8 +27,6 @@ static int handler(void *user, const char *section, const char *name,
 		} else if (MATCH("postgres", "origin_user")) {
 			ini_config->postgres_config->origin_user =
 				strdup(value);
-			printf("%s\n",
-			       ini_config->postgres_config->origin_user);
 		} else if (MATCH("postgres", "origin_password")) {
 			ini_config->postgres_config->origin_password =
 				strdup(value);

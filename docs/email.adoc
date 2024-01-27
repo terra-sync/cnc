@@ -1,0 +1,57 @@
+= EMAIL
+
+Description
+===========
+
+Implements the function `send_email` declared in the `email.h` header file. It uses the libcurl library to send an email.
+
+Global Variables
+================
+
+``to_header``, ``from_header``, ``body_content``
+------------------------------------------------
+
+These are character arrays that store the recipient's email address, the sender's email address, and the body of the email, respectively.
+
+``payload_text``
+----------------
+
+This is an array of strings that represents the payload of the email. It includes the date, recipient's email address, sender's email address, subject, body, and end of message.
+
+Functions
+=========
+
+``payload_source``
+------------------
+
+This is a callback function that libcurl calls when it needs to get the payload data.
+
+Parameters
+^^^^^^^^^^
+
+- ``void *ptr``: A pointer to a buffer where the payload data should be copied.
+- ``size_t size``: The size of each data unit.
+- ``size_t nmemb``: The number of data units.
+- ``void *userp``: A user-defined pointer.
+
+Returns
+^^^^^^^
+
+- ``size_t``: The number of bytes copied to the buffer.
+
+``send_email``
+--------------
+
+This function sends an email.
+
+Parameters
+^^^^^^^^^^
+
+- ``const char *to``: The recipient of the email.
+- ``const char *subject``: The subject of the email.
+- ``const char *body``: The body of the email.
+
+Returns
+^^^^^^^
+
+- ``int``: The status of the email sending operation.

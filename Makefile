@@ -1,6 +1,6 @@
 CC?=gcc
 CFLAGS=-Iinclude -I/usr/include/postgresql/ -Wall -g
-LDFLAGS=-linih -lpq
+LDFLAGS=-linih -lpq -lcurl
 DEPS=$(wildcard include/*.h)
 SRC=$(wildcard src/*.c)
 OBJ=$(SRC:src/%.c=%.o)
