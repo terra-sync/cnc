@@ -22,6 +22,4 @@ CNC simplifies the process of database replication, especially in cloud environm
 
 == How to Contribute
 
-Refer to `CONTRIBUTING.adoc`.
-
-*Contributions can be submitted via GitHub pull requests.*
+Refer to link:https://github.com/terra-sync/cnc/blob/master/docs/CONTRIBUTING.adoc[CONTRIBUTING.adoc].

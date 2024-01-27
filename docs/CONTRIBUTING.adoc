@@ -1,0 +1,30 @@
+= Contributing to CNC
+
+We appreciate your interest in contributing to the CNC project! Here are some guidelines to help you get started.
+
+== Getting Started
+
+To get started with contributing to CNC, you'll need to fork the repository and clone it to your local machine. You can then create a new branch from `master` for your changes.
+
+== Making Changes
+
+When making changes, please follow these guidelines:
+
+- If you're adding new functionality, please also add corresponding tests.
+- If you're changing existing functionality, make sure all tests still pass after your changes.
+- If you're changing APIs, please update the corresponding documentation.
+- Please follow the coding style used throughout the project, which includes using 2 spaces for indentation rather than tabs.
+
+== Submitting Changes
+
+Once you've made your changes, you can submit them as a pull request. Please provide a clear and detailed description of your changes in the pull request.
+
+== Reporting Bugs
+
+If you find a bug in the CNC project, please report it using GitHub's issues. You can report a bug by link:https://github.com/terra-sync/cnc/issues/new[opening a new issue]. When reporting a bug, please provide:
+
+- A quick summary and/or background
+- Steps to reproduce the bug
+- Be specific and provide sample code if you can
+- What you expected would happen
+- What actually happens
