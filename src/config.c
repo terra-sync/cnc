@@ -92,7 +92,7 @@ int initialize_config(const char *config_file)
 	ini_config = (config_t *)malloc(sizeof(config_t));
 	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
 	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
-	ret = ini_parse("test.ini", handler, ini_config);
+	ret = ini_parse(config_file, handler, ini_config);
 
 	return ret;
 }

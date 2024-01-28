@@ -39,10 +39,10 @@ int main(int argc, char **argv)
 		if (ret < 0) {
 			if (ret == -1) {
 				fprintf(stderr,
-					"Config: Error opening `.ini` file");
+					"Config: Error opening `.ini` file\n");
 			} else if (ret == -2) {
 				fprintf(stderr,
-					"Config: Error allocating memory");
+					"Config: Error allocating memory\n");
 			}
 
 			free((void *)config_file);
