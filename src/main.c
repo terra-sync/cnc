@@ -44,10 +44,18 @@ int main(int argc, char **argv)
 				fprintf(stderr,
 					"Config: Error allocating memory");
 			}
+
+			free((void *)config_file);
+			free_config();
+			return ret;
 		} else if (ret > 0) {
 			fprintf(stderr,
 				"Error parsing line: %d. Please check your `.ini.` file\n",
 				ret);
+
+			free((void *)config_file);
+			free_config();
+			return ret;
 		}
 	}
 
