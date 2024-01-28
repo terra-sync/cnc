@@ -46,7 +46,6 @@ int main(int argc, char **argv)
 			}
 
 			free((void *)config_file);
-			free_config();
 			return ret;
 		} else if (ret > 0) {
 			fprintf(stderr,
