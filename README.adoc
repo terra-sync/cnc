@@ -45,6 +45,7 @@ Execute the built application:
 
 == Configuration
 The CNC tool uses `.ini` files for configuration. Here's a brief overview:
+
 - *PostgreSQL Settings*: Configure host, user, password, port, and database details in the `[postgres]` section.
 - *Email Settings*: Set up SMTP settings including username, password, host, and port in the `[smtp]` section.
 +
