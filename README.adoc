@@ -40,7 +40,7 @@ make all
 Execute the built application:
 +
 ----
-./cnc
+./cnc -f configs/test.ini
 ----
 
 == Configuration
