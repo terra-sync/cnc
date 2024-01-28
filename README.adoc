@@ -5,21 +5,57 @@
 :toclevels: 2
 :icons: font
 
-= CNC
+= CNC - Database Replication Tool
 
-== What is it?
+== Introduction
+CNC is a robust tool designed in C to facilitate the replication of databases from a host to a target system. With its current focus on PostgreSQL, CNC aims to simplify and automate the database replication process, especially in cloud environments, thereby catering to the needs of DevOps teams.
 
-CNC is a project written in C that allows users to replicate databases from a host to a target system. It utilizes .ini files to specify the host and target databases and performs replication through dump and restore actions. Currently only PostgreSQL is supported but the tool is designed to be extended for other database systems in the future.
+== Features
+- *Database Replication*: Seamlessly replicate databases from a host to a target system with minimal manual intervention.
+- *PostgreSQL Support*: Currently supports PostgreSQL with plans to extend functionality to other database systems.
+- *Configuration Management*: Easy management of database and application settings through `.ini` files.
+- *Email Notifications*: Integrates email functionalities to notify about replication status or errors.
 
-== Why?
+== Quick Start
+1. *Clone the Repository*
++
+----
+git clone https://github.com/terra-sync/cnc
+----
++
+2. *Set Up Configuration*
++
+Edit the `.ini` files in the `configs` directory to set up the database and email configurations.
++
+3. *Build the Project*
++
+Use the provided Makefile:
++
+----
+make all
+----
++
+4. *Run the Application*
++
+Execute the built application:
++
+----
+./cnc
+----
 
-CNC simplifies the process of database replication, especially in cloud environments. It addresses the needs of DevOps teams by automating and streamlining the replication process, reducing manual intervention and potential for errors.
+== Configuration
+The CNC tool uses `.ini` files for configuration. Here's a brief overview:
+- *PostgreSQL Settings*: Configure host, user, password, port, and database details in the `[postgres]` section.
+- *Email Settings*: Set up SMTP settings including username, password, host, and port in the `[smtp]` section.
++
+For a detailed configuration guide, please refer to link:docs/config.adoc[Config Module Documentation].
+
+== Contributing
+We welcome contributions! Please refer to link:docs/CONTRIBUTING.adoc[CONTRIBUTING.adoc] for guidelines on how to contribute to this project.
 
 == Authors
+- Charalampos Mitrodimas - mailto:charmitro@terrasync.net[charmitro@terrasync.net]
+- Panagiotis Foliadis - mailto:pfoladis@terrasync.net[pfoladis@terrasync.net]
 
-* Charalampos Mitrodimas (charmitro@terrasync.net | charmitro@posteo.net)
-* Panagiotis Foliadis (pfoladis@terrasync.net | pfoliadis@hotmail.com)
-
-== How to Contribute
-
-Refer to link:https://github.com/terra-sync/cnc/blob/master/docs/CONTRIBUTING.adoc[CONTRIBUTING.adoc].
+== License
+This project is licensed under the link:LICENSE[MIT License].
