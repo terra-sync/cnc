@@ -1,0 +1,38 @@
+name: Build CI
+on:
+  pull_request:
+  push:
+jobs:
+  runner-job:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt install libinih-dev
+          sudo apt install libcurl4-openssl-dev
+          sudo apt install valgrind
+      - name: Build CNC
+        run: make
+      - name: Run Valgrind
+        run: |
+          valgrind --leak-check=full --error-exitcode=1 ./cnc -f configs/ci-config.ini -v
+          valgrind_exit_code=$?
+          echo "Valgrind Exit Code: $valgrind_exit_code"
+          if [ $valgrind_exit_code -ne 0 ]; then
+            echo "Memory leaks detected"
+            exit 1
+          fi
+
