@@ -1,0 +1,56 @@
+= Config Module
+
+The Config module is responsible for managing the application's configuration. It reads configuration from an `.ini` file and stores it in a `config_t` structure. The configuration includes settings for PostgreSQL and SMTP.
+
+== Configuration File
+
+The configuration is stored in an `.ini` file. This file is divided into sections, each representing a different part of the configuration. Here's an example:
+
+[source,ini]
+----
+[postgres]
+enabled = true
+origin_host = localhost
+origin_user = user
+origin_password = password
+origin_port = 5432
+origin_db = database
+
+[smtp]
+username = user
+password = password
+smtp_host = smtp.example.com
+smtp_port = 587
+auth_mode = login
+----
+
+In this example, the `[postgres]` section contains the configuration for PostgreSQL, and the `[smtp]` section contains the configuration for SMTP.
+
+== config_t Structure
+
+The `config_t` structure holds the application's configuration. It includes fields for PostgreSQL and SMTP configuration:
+
+[source,c]
+----
+typedef struct {
+    postgres_t *postgres;
+    smtp_t *smtp;
+} config_t;
+----
+
+The `postgres_t` and `smtp_t` structures represent the PostgreSQL and SMTP configuration, respectively.
+
+== Accessing the Configuration
+
+The configuration is stored in a global `config_t` variable. You can access this variable to read the configuration:
+
+[source,c]
+----
+extern config_t *config;
+----
+
+For example, to get the PostgreSQL username, you would use `config->postgres->origin_user`.
+
+== Updating the Configuration
+
+To update the configuration, you need to modify the `.ini` file and restart the application. The Config module will read the new configuration when the application starts.
