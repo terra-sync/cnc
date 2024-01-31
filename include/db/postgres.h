@@ -21,6 +21,6 @@ int connect_pg(struct db_t *);
 void close_pg(struct db_t *pg_db_t);
 int replicate(struct db_t *pg_db_t, struct options *pg_options);
 
-int execve_binary(char* ,char *const[], char *const[]);
+int execve_binary(char *, char *const[], char *const[]);
 
 #endif

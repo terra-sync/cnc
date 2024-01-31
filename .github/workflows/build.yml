@@ -2,8 +2,19 @@ name: Build CI
 on:
   pull_request:
   push:
+
 jobs:
-  runner-job:
+  clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run clang-format style check for C/C++ programs.
+        uses: jidicula/clang-format-action@v4.9.0
+        with:
+          clang-format-version: '14'
+          check-path: '.'
+
+  build-and-valgrind:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -35,4 +46,3 @@ jobs:
             echo "Memory leaks detected"
             exit 1
           fi
-

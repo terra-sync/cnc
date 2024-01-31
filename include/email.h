@@ -8,7 +8,6 @@ struct upload_status {
 	int lines_read; // Number of lines read in the email body.
 };
 
-
 int send_email(const char *to, const char *subject, const char *body);
 
 #endif
