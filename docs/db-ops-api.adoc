@@ -5,7 +5,7 @@ The Database Operator API provides a consistent interface for interacting with d
 
 == `available_dbs` Global Variable
 
-The `available_dbs` global variable is an array of pointers to `db_operations` structures. It is defined in `db.c` and declared in `postgres.c`. Each element in the array represents a different database implementation.
+The `available_dbs` global variable is an array of pointers to `db_operations` structures. It is defined in `db.h` and declared differently for each database implementation . Each element in the array represents a different database implementation.
 
 == db_operations Structure
 
@@ -32,7 +32,7 @@ int (*connect)(const char *host, const char *db_name, const char *user, const ch
 void (*close)(void);
 ----
 
-* `replicate`: This function is used to execute a SQL statement on the database. It takes the following parameter:
+* `replicate`: This function is used to execute the necessary SQL statements for the replication on the database. It takes the following parameter:
 
 ** `sql`: The SQL statement to execute.
 
@@ -54,7 +54,7 @@ Each database implementation should define a `db_operations` structure with its 
 
 == Database Implementations
 
-Each database that adds support to the Database Operator API will need to create its own `db_operations` structure and define the function pointers for `connect`, `close`, `replicate`, and `db`. This allows each database to provide its own implementation of these operations.
+Each database that adds support to the Database Operator API will need to create its own `db_operations` structure and define the function pointers for `connect`, `close`, `replicate`, and struct pointer for `db`. Also, an `init` function is needed, similar to `construct_pg` in `postgres.c` to make the necessary memory allocations, and populate the necessary fields from config. This allows each database to provide its own implementation of these operations.
 
 For example, a PostgreSQL database might define its `db_operations` structure as follows:
 
@@ -70,16 +70,6 @@ struct db_operations postgres_ops = {
 
 In this example, `postgres_connect`, `postgres_close`, `postgres_replicate` are functions defined by the PostgreSQL database to implement the corresponding operations, and `postgres_db` is a `db_t` structure representing a PostgreSQL database connection.
 
-Remember to update the `available_dbs` array in `db.c` to include the new `db_operations` structure when a new database adds support.
+Remember to update the `available_dbs` array in `db.c` to include the new `db_operations` structure when a new database adds support by using the ADD_FUNC macro, with the `init` function, that will act as an entry point to the rest of operations.
 
-== Usage
 
-Here's an example of how you might use the Database Operator API:
-
-* Include the necessary header files:
-
-[source,c]
-----
-#include "db/db.h"
-#include "db/postgres.h"
-----
