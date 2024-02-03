@@ -15,4 +15,4 @@ clean:
 	rm -f *.o cnc
 
 valgrind: cnc
-	valgrind --leak-check=full ./cnc -f test.ini
+	valgrind --leak-check=full ./cnc -f configs/test.ini
