@@ -38,6 +38,7 @@ int main(int argc, char **argv)
 	int c;
 	char *config_file = NULL;
 
+	optind = 0;
 	while ((c = getopt_long(argc, argv, "f:vh", options, NULL)) != -1) {
 		switch (c) {
 		case 'f':
@@ -48,10 +49,17 @@ int main(int argc, char **argv)
 			verbose = true;
 			break;
 		case 'h':
+		case '?':
 		default:
 			help();
 			return 0;
 		}
+	}
+	// Check for non-option arguments (arguments without '-' or '--')
+	if (optind < argc) {
+		fprintf(stderr, "Non-option argument: %s\n", argv[optind]);
+		help();
+		return -1;
 	}
 
 	if (config_file != NULL) {
