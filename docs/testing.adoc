@@ -1,0 +1,62 @@
+= Summary
+
+This documentation covers the process of adding new test cases to our test suite.
+
+== Adding New Tests
+
+To add new tests, follow these steps:
+
+.1 Define the Test Function:
+
+* Create a new test function with the signature `void test_your_test_name(void)`.
+* Implement your test logic using CUnit assertions like `CU_ASSERT_EQUAL`.
++
+[source,c]
+----
+void test_your_test_name(void) {
+    // Act
+    // (Execute the function you want to test here)
+
+    // Assert
+    // (Use CUnit assertions to validate the results)
+    CU_ASSERT_EQUAL(actual_result, expected_result);
+}
+----
+
+.2 Add your test to the `test_cases` array:
+
+* Add an entry for your new test function in the `test_cases` array.
++
+[source,c]
+----
+CU_test_info test_cases[] = {
+    // ... (existing test cases)
+    { "test_your_test_name", test_your_test_name },
+    { NULL, NULL } // Array must be NULL terminated
+};
+----
+
+.3 (Optional) Create a New Test Suite:
+
+If your test requires a separate setup or cleanup, or if you want to group your tests logically, you can create a new suite.
+
+* Define new `init_suite` and `clean_suite` functions if necessary.
+* Add a new suite in the `main` function:
++
+[source,c]
+----
+CU_pSuite p_suite2 = CU_add_suite("Suite_2", init_suite_your_suite, clean_suite_your_suite);
+if (NULL == p_suite2) {
+    CU_cleanup_registry();
+    return CU_get_error();
+}
+
+if (CUE_SUCCESS != add_tests(p_suite2, your_test_cases)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+}
+----
+
+== Running the Tests
+
+`make test` will produce `test` binary.
