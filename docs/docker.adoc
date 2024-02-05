@@ -1,0 +1,30 @@
+= Docker Usage Documentation
+
+This document provides instructions on how to build and run the CNC application using Docker.
+
+== Building the Docker Image
+
+First, build the Docker image using the provided Dockerfile. The Dockerfile creates a lightweight, Alpine-based image for running the CNC application. It compiles the application in a builder stage and then creates a final image containing only the compiled binary and its runtime dependencies.
+
+[source,sh]
+----
+docker build -t cnc .
+----
+
+== Running the CNC Application in a Docker Container
+
+To run the CNC application inside a Docker container, use the `docker run` command. You need to mount the configuration file (`test.ini`) from the host into the container to ensure the application can access it.
+
+[source,sh]
+----
+docker run \
+        -v /path/to/your/configs/test.ini:/path/inside/container/test.ini \
+        cnc -f /path/inside/container/test.ini
+----
+
+In the command above:
+
+* The `-v` option mounts the `test.ini` file from the host system into the container at the location `/configs/test.ini`.
+* `cnc -f /configs/test.ini` runs the CNC application inside the container and instructs it to use the mounted configuration file.
+
+NOTE: Remember to replace `/home/charmitro/Documents/git/cnc/configs/test.ini` with the actual path to your `test.ini` file on your host machine.
