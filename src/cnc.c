@@ -77,7 +77,7 @@ int process_args(int argc, char **argv)
 			return ret;
 		} else if (ret > 0) {
 			fprintf(stderr,
-				"Error parsing line: %d. Please check your `.ini.` file\n",
+				"Error parsing line: %d. Please check your `.ini` file\n",
 				ret);
 
 			free((void *)config_file);

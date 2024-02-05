@@ -1,6 +1,12 @@
 #include <CUnit/Basic.h>
 
 #include "cnc.h"
+#include "config.h"
+
+#include <stdlib.h>
+#include <ini.h>
+
+extern config_t *ini_config;
 
 int init_suite(void)
 {
@@ -37,6 +43,46 @@ void test_missing_config(void)
 	CU_ASSERT_EQUAL(result, -1);
 }
 
+void test_backup_full(void)
+{
+	ini_config = (config_t *)malloc(sizeof(config_t));
+	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
+	ini_parse_string("[postgres]\nbackupt_type=full", handler, ini_config);
+	CU_ASSERT_EQUAL(ini_config->postgres_config->backup_type, FULL);
+}
+
+void test_backup_schema_only(void)
+{
+	ini_config = (config_t *)malloc(sizeof(config_t));
+	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
+	ini_parse_string("[postgres]\nbackup_type=schema", handler, ini_config);
+	CU_ASSERT_EQUAL(ini_config->postgres_config->backup_type, SCHEMA);
+}
+
+void test_invalid_backup_type(void)
+{
+	int result;
+	ini_config = (config_t *)malloc(sizeof(config_t));
+	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
+	result = ini_parse_string("[postgres]\nbackup_type=wrong_type", handler,
+				  ini_config);
+	CU_ASSERT_EQUAL(result, 2);
+}
+
+void test_empty_backup_type(void)
+{
+	int result;
+	ini_config = (config_t *)malloc(sizeof(config_t));
+	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
+	result = ini_parse_string("[postgres]\nbackup_type=", handler,
+				  ini_config);
+	CU_ASSERT_EQUAL(result, 2);
+}
+
 typedef struct CU_test_info {
 	const char *test_name;
 	void (*test_func)(void);
@@ -46,6 +92,10 @@ typedef struct CU_test_info {
 CU_test_info test_cases[] = {
 	{ "test_config", test_config },
 	{ "test_missing_config", test_missing_config },
+	{ "test_backup_full", test_backup_full },
+	{ "test_backup_schema_only", test_backup_schema_only },
+	{ "test_invalid_backup_type", test_invalid_backup_type },
+	{ "test_empty_backup_type", test_empty_backup_type },
 	{ NULL, NULL } // Array must be NULL terminated
 };
 

@@ -51,18 +51,6 @@ struct db_t {
 	void *target_conn;
 };
 
-/* struct options
- * Replication options
- *
- * * enum backup_type - schema-only or full backup strategy
- */
-struct options {
-	enum backup_type {
-		SCHEMA_ONLY = 0,
-		FULL,
-	} backup_type;
-};
-
 /* struct db_operations
  * db_operations structure holds pointers to functions defined by
  * the database driver that performs construct, connect, replicate,
@@ -90,7 +78,7 @@ struct db_operations {
 	struct db_t *db;
 	int (*connect)(struct db_t *);
 	void (*close)(struct db_t *);
-	int (*replicate)(struct db_t *, struct options *);
+	int (*replicate)(struct db_t *);
 };
 
 int execute_db_operations(void);
