@@ -43,6 +43,8 @@ Execute the built application:
 ./cnc -f configs/test.ini
 ----
 
+NOTE: To run with Docker read our link:docs/docker.adoc[docker documentation].
+
 == Configuration
 The CNC tool uses `.ini` files for configuration. Here's a brief overview:
 
