@@ -210,7 +210,7 @@ int execve_binary(char *command_path, char *const command_args[],
  *  -2 Failure of creation of fork() or pipe()
  *
  */
-int replicate(struct db_t *pg_db_t, struct options *pg_options)
+int replicate(struct db_t *pg_db_t)
 {
 	int ret = 0;
 	char *pg_pass = NULL;
@@ -219,6 +219,8 @@ int replicate(struct db_t *pg_db_t, struct options *pg_options)
 	char *pg_bin, prefixed_command_path[261] = "PATH=";
 	char command_path[255] = "/usr/bin/";
 	int command_path_size = strlen(command_path);
+
+	construct_dump_path(backup_path);
 
 	char *const dump_args[] = {
 		PG_DUMP_COMMAND,
@@ -235,6 +237,7 @@ int replicate(struct db_t *pg_db_t, struct options *pg_options)
 		"-f",
 		backup_path,
 		"-v",
+		pg_db_t->pg_conf->backup_type == SCHEMA ? "-s" : NULL,
 		NULL
 	};
 
@@ -252,8 +255,6 @@ int replicate(struct db_t *pg_db_t, struct options *pg_options)
 		"-v",
 		NULL
 	};
-
-	construct_dump_path(backup_path);
 
 	pr_debug("Checking if $PG_BIN environmental variable.\n");
 	pg_bin = getenv("PG_BIN");

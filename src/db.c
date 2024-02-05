@@ -31,7 +31,7 @@ int execute_db_operations(void)
 				available_dbs[i]->close(available_db);
 				return ret;
 			}
-			available_dbs[i]->replicate(available_db, NULL);
+			available_dbs[i]->replicate(available_db);
 			available_dbs[i]->close(available_db);
 		}
 	}

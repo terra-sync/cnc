@@ -3,6 +3,13 @@
 
 #include <stdbool.h>
 
+// enum backup_type - schema-only or full backup strategy
+
+typedef enum backup_type {
+	SCHEMA = 0,
+	FULL,
+} backup_type;
+
 typedef struct postgres_t {
 	bool enabled;
 
@@ -17,6 +24,8 @@ typedef struct postgres_t {
 	const char *target_password;
 	const char *target_port;
 	const char *target_database;
+
+	backup_type backup_type;
 } postgres_t;
 
 typedef enum auth_mode_t {
@@ -39,5 +48,7 @@ typedef struct config_t {
 
 int initialize_config(const char *config_file);
 void free_config(void);
+int handler(void *user, const char *section, const char *name,
+	    const char *value);
 
 #endif

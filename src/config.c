@@ -10,8 +10,8 @@
 
 config_t *ini_config;
 
-static int handler(void *user, const char *section, const char *name,
-		   const char *value)
+int handler(void *user, const char *section, const char *name,
+	    const char *value)
 {
 	ini_config = (config_t *)user;
 
@@ -51,6 +51,17 @@ static int handler(void *user, const char *section, const char *name,
 		} else if (MATCH("postgres", "target_database")) {
 			ini_config->postgres_config->target_database =
 				strdup(value);
+		} else if (MATCH("postgres", "backup_type")) {
+			if (strcmp("schema", value) == 0) {
+				ini_config->postgres_config->backup_type =
+					SCHEMA;
+			} else if (strcmp("full", value) == 0) {
+				ini_config->postgres_config->backup_type = FULL;
+			} else {
+				fprintf(stderr,
+					"Accepted `backup_type` values are \"schema\" or \"full\".\n");
+				return 0;
+			}
 		} else {
 			return 0;
 		}
@@ -67,10 +78,15 @@ static int handler(void *user, const char *section, const char *name,
 		} else if (MATCH("smtp", "smtp_port")) {
 			ini_config->smtp_config->smtp_port = strdup(value);
 		} else if (MATCH("smtp", "auth_mode")) {
-			if (strcmp("ssl", value))
+			if (strcmp("ssl", value) == 0) {
 				ini_config->smtp_config->auth_mode = SSL;
-			if (strcmp("tls", value))
+			} else if (strcmp("tls", value) == 0) {
 				ini_config->smtp_config->auth_mode = TLS;
+			} else {
+				fprintf(stderr,
+					"Accepted `auth_mode` values are \"ssl\" or \"tls\".\n");
+				return 0;
+			}
 		}
 	}
 
