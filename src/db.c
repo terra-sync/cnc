@@ -36,7 +36,6 @@ int execute_db_operations(void)
 		}
 	}
 
-	free(available_db);
 	free(available_dbs);
 
 	return 0;
