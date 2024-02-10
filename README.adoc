@@ -29,10 +29,10 @@ Edit the `.ini` files in the `configs` directory to set up the database.
 +
 3. *Build the Project*
 +
-Use the provided Makefile:
-+
 ----
-make all
+./autogen.sh
+./configure
+make
 ----
 +
 4. *Run the Application*

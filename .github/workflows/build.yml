@@ -36,7 +36,11 @@ jobs:
           sudo apt install libcurl4-openssl-dev
           sudo apt install valgrind
       - name: Build CNC
-        run: make
+        run: |
+          ./autogen.sh
+          ./configure
+          make
+
       - name: Run Valgrind
         run: |
           valgrind --leak-check=full --error-exitcode=1 ./cnc -f configs/ci-config.ini -v
