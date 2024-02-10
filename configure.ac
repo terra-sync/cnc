@@ -3,6 +3,10 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 AC_PROG_CC
 AC_CANONICAL_HOST
 
+# Check for Cargo, the Rust package manager
+AC_CHECK_PROG([CARGO], [cargo], [yes], [no])
+AS_IF([test "x$CARGO" = "xno"], [AC_MSG_ERROR([Cargo is required to build Rust libraries.])])
+
 # Detect macOS and adjust CFLAGS and LDFLAGS for Homebrew
 AS_CASE([$host_os],
   [darwin*], [

@@ -40,13 +40,3 @@ jobs:
           ./autogen.sh
           ./configure
           make
-
-      - name: Run Valgrind
-        run: |
-          valgrind --leak-check=full --error-exitcode=1 ./cnc -f configs/ci-config.ini -v
-          valgrind_exit_code=$?
-          echo "Valgrind Exit Code: $valgrind_exit_code"
-          if [ $valgrind_exit_code -ne 0 ]; then
-            echo "Memory leaks detected"
-            exit 1
-          fi

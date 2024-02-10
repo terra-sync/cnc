@@ -87,6 +87,12 @@ int handler(void *user, const char *section, const char *name,
 					"Accepted `auth_mode` values are \"ssl\" or \"tls\".\n");
 				return 0;
 			}
+		} else if (MATCH("smtp", "from")) {
+			ini_config->smtp_config->from = strdup(value);
+		} else if (MATCH("smtp", "to")) {
+			ini_config->smtp_config->to = strdup(value);
+		} else if (MATCH("smtp", "cc")) {
+			ini_config->smtp_config->cc = strdup(value);
 		}
 	}
 
@@ -131,6 +137,9 @@ void free_config(void)
 	free((void *)ini_config->smtp_config->password);
 	free((void *)ini_config->smtp_config->smtp_port);
 	free((void *)ini_config->smtp_config->smtp_host);
+	free((void *)ini_config->smtp_config->to);
+	free((void *)ini_config->smtp_config->from);
+	free((void *)ini_config->smtp_config->cc);
 
 	free(ini_config->smtp_config);
 	free(ini_config->postgres_config);
