@@ -14,7 +14,7 @@ CNC is a robust tool designed in C to facilitate the replication of databases fr
 - *Database Replication*: Seamlessly replicate databases from a host to a target system with minimal manual intervention.
 - *PostgreSQL Support*: Currently supports PostgreSQL with plans to extend functionality to other database systems.
 - *Configuration Management*: Easy management of database and application settings through `.ini` files.
-- *Email Notifications*: Integrates email functionalities to notify about replication status or errors.
+- *Email Notifications (Under development)*: Integrates email functionalities to notify about replication status or errors.
 
 == Quick Start
 1. *Clone the Repository*
@@ -25,7 +25,7 @@ git clone https://github.com/terra-sync/cnc
 +
 2. *Set Up Configuration*
 +
-Edit the `.ini` files in the `configs` directory to set up the database and email configurations.
+Edit the `.ini` files in the `configs` directory to set up the database.
 +
 3. *Build the Project*
 +
@@ -49,7 +49,7 @@ NOTE: To run with Docker read our link:docs/docker.adoc[docker documentation].
 The CNC tool uses `.ini` files for configuration. Here's a brief overview:
 
 - *PostgreSQL Settings*: Configure host, user, password, port, and database details in the `[postgres]` section.
-- *Email Settings*: Set up SMTP settings including username, password, host, and port in the `[smtp]` section.
+- *Email Settings (Under Development)*: Set up SMTP settings including username, password, host, and port in the `[smtp]` section.
 +
 For a detailed configuration guide, please refer to link:docs/config.adoc[Config Module Documentation].
 
