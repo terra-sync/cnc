@@ -39,6 +39,10 @@ typedef struct smtp_t {
 	const char *smtp_host;
 	const char *smtp_port;
 	auth_mode_t auth_mode;
+
+	const char *from;
+	const char *to;
+	const char *cc;
 } smtp_t;
 
 typedef struct config_t {
