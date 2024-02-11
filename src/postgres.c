@@ -218,7 +218,7 @@ int replicate(struct db_t *pg_db_t)
 	char backup_path[255] = { 0 };
 	char *pg_bin, prefixed_command_path[261] = "PATH=";
 	char command_path[255] = "/usr/bin/";
-	int command_path_size = strlen(command_path);
+	int command_path_size = strlen(command_path) + 1;
 
 	construct_dump_path(backup_path);
 
@@ -260,7 +260,7 @@ int replicate(struct db_t *pg_db_t)
 	pg_bin = getenv("PG_BIN");
 	if (pg_bin) {
 		pr_debug("$PG_BIN=%s was found.\n", pg_bin);
-		command_path_size = strlen(pg_bin);
+		command_path_size = strlen(pg_bin) + 1;
 		snprintf(command_path, command_path_size, "%s", pg_bin);
 	}
 	strncat(prefixed_command_path, command_path, command_path_size + 1);
@@ -292,7 +292,7 @@ cleanup:
 void construct_dump_path(char *path)
 {
 	char *home_path = getenv("HOME");
-	int home_path_size = strlen(home_path);
+	int home_path_size = strlen(home_path) + 1;
 	snprintf(path, home_path_size, "%s", home_path);
 	strcat(path, "/backup.dump");
 }
