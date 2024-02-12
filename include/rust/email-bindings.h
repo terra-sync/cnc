@@ -45,21 +45,21 @@ typedef struct EmailInfo {
  *     size_t to_len = 2; // Number of recipients
  *     const char* cc = "cc@example.com";
  *     const char* body = "Hello from C! This is the email body.";
- *	const char *smtp_host = "posteo.de";
- *	const char *smtp_username = "username";
- *	const char *smtp_password = "password";
+ *     const char *smtp_host = "posteo.de";
+ *     const char *smtp_username = "username";
+ *     const char *smtp_password = "password";
  *
- *	// Construct the EmailInfo struct as defined in Rust, adapted for use in C
- *	EmailInfo email_info = {
- *		.from = from,
- *		.to = to,
- *		.to_len = to_len,
- *		.cc = cc,
- *		.body = body,
- *		.smtp_host = smtp_host,
- *		.smtp_username = smtp_username,
- *		.smtp_password = smtp_password,
- *	};
+ *     // Construct the EmailInfo struct as defined in Rust, adapted for use in C
+ *     EmailInfo email_info = {
+ *             .from = from,
+ *             .to = to,
+ *             .to_len = to_len,
+ *             .cc = cc,
+ *             .body = body,
+ *             .smtp_host = smtp_host,
+ *             .smtp_username = smtp_username,
+ *             .smtp_password = smtp_password,
+ *     };
  *
  *     // Call the `send_email` function and capture the return value
  *     int result = send_email(email_info);
