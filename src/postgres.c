@@ -83,7 +83,7 @@ int connect_pg(struct db_t *pg_db_t)
 	pg_db_t->origin_conn = PQconnectdbParams(keywords, origin_values, 0);
 	if (PQstatus(pg_db_t->origin_conn) != CONNECTION_OK) {
 		pr_debug("Postgres origin-database connection: Failed!\n");
-		fprintf(stderr, "%s", PQerrorMessage(pg_db_t->origin_conn));
+		pr_error("%s", PQerrorMessage(pg_db_t->origin_conn));
 		ret = -1;
 		return ret;
 	}
@@ -93,7 +93,7 @@ int connect_pg(struct db_t *pg_db_t)
 	pg_db_t->target_conn = PQconnectdbParams(keywords, target_values, 0);
 	if (PQstatus(pg_db_t->target_conn) != CONNECTION_OK) {
 		pr_debug("Target-database connection: Failed!\n");
-		fprintf(stderr, "%s", PQerrorMessage(pg_db_t->target_conn));
+		pr_error("%s", PQerrorMessage(pg_db_t->target_conn));
 		ret = -1;
 		return ret;
 	}
@@ -135,7 +135,7 @@ int exec_command(const char *pg_command_path, char *const args[], char *pg_pass,
 				(char *const *)command_envp);
 
 	if (ret != 0) {
-		printf("`%s` failed\n", args[0]);
+		pr_error("`%s` failed\n", args[0]);
 	}
 
 	return ret;
@@ -161,7 +161,7 @@ int execve_binary(char *command_path, char *const command_args[],
 	int wstatus;
 
 	if (pipe(pipefd) == -1) {
-		printf("Failure creating the pipe.\n");
+		pr_error("Failure creating the pipe.\n");
 		return -2;
 	}
 
@@ -172,7 +172,7 @@ int execve_binary(char *command_path, char *const command_args[],
 		dup2(pipefd[WRITE_END], STDOUT_FILENO);
 		close(pipefd[WRITE_END]);
 		execve(command_path, command_args, envp);
-		printf("Error executing `pg_dump`\n");
+		pr_error("Error executing `pg_dump`\n");
 		pr_debug("`pg_dump` error: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	} else {
@@ -180,7 +180,7 @@ int execve_binary(char *command_path, char *const command_args[],
 			pr_debug(
 				"`pg_dump` process failed to start: %s.\n Replication process will be terminated.\n",
 				strerror(errno));
-			printf("%s\n", strerror(errno));
+			pr_error("%s\n", strerror(errno));
 			return -2;
 		}
 	}
@@ -281,7 +281,7 @@ int replicate(struct db_t *pg_db_t)
 	if (ret != 0)
 		goto cleanup;
 
-	printf("Database Replication was successful!\n");
+	pr_info("Database Replication was successful!\n");
 
 cleanup:
 	free(pg_command_path);
@@ -302,7 +302,7 @@ void read_buffer_pipe(int *pipefd)
 	char buffer[4096] = { 0 };
 	int nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
 	while (nbytes > 0) {
-		printf("%s", buffer);
+		pr_info("%s", buffer);
 		memset(buffer, 0, sizeof(buffer));
 		nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
 	}

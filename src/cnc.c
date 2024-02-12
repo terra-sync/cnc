@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "log.h"
 #include "config.h"
 #include "db/db.h"
 #include "cnc.h"
@@ -20,11 +21,11 @@ static struct option options[] = {
 
 void help(void)
 {
-	printf("Usage: cnc [options]\n");
-	printf("Options:\n");
-	printf("  -f, --config-file <file>  Specify the config file to use\n");
-	printf("  -v, --verbose             Run in verbose mode\n");
-	printf("  -h, --help                Print this help message\n");
+	pr_info("Usage: cnc [options]\n");
+	pr_info("Options:\n");
+	pr_info("  -f, --config-file <file>  Specify the config file to use\n");
+	pr_info("  -v, --verbose             Run in verbose mode\n");
+	pr_info("  -h, --help                Print this help message\n");
 }
 
 int process_args(int argc, char **argv)
@@ -43,7 +44,7 @@ int process_args(int argc, char **argv)
 		switch (c) {
 		case 'f':
 			config_file = strdup(optarg);
-			printf("%s\n", config_file);
+			pr_info("%s\n", config_file);
 			break;
 		case 'v':
 			verbose = true;
@@ -57,7 +58,7 @@ int process_args(int argc, char **argv)
 	}
 	// Check for non-option arguments (arguments without '-' or '--')
 	if (optind < argc) {
-		fprintf(stderr, "Non-option argument: %s\n", argv[optind]);
+		pr_error("Non-option argument: %s\n", argv[optind]);
 		help();
 		return -1;
 	}
@@ -66,17 +67,15 @@ int process_args(int argc, char **argv)
 		ret = initialize_config(config_file);
 		if (ret < 0) {
 			if (ret == -1) {
-				fprintf(stderr,
-					"Config: Error opening `.ini` file\n");
+				pr_error("Config: Error opening `.ini` file\n");
 			} else if (ret == -2) {
-				fprintf(stderr,
-					"Config: Error allocating memory\n");
+				pr_error("Config: Error allocating memory\n");
 			}
 
 			free((void *)config_file);
 			return ret;
 		} else if (ret > 0) {
-			fprintf(stderr,
+			pr_error(
 				"Error parsing line: %d. Please check your `.ini` file\n",
 				ret);
 
