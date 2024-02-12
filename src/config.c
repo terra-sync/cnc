@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <ini.h>
 
+#include "log.h"
+
 #define CHECK_SECTION(s) strcmp(section, s) == 0
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
 
@@ -58,7 +60,7 @@ int handler(void *user, const char *section, const char *name,
 			} else if (strcmp("full", value) == 0) {
 				ini_config->postgres_config->backup_type = FULL;
 			} else {
-				fprintf(stderr,
+				pr_error(
 					"Accepted `backup_type` values are \"schema\" or \"full\".\n");
 				return 0;
 			}
@@ -83,7 +85,7 @@ int handler(void *user, const char *section, const char *name,
 			} else if (strcmp("tls", value) == 0) {
 				ini_config->smtp_config->auth_mode = TLS;
 			} else {
-				fprintf(stderr,
+				pr_error(
 					"Accepted `auth_mode` values are \"ssl\" or \"tls\".\n");
 				return 0;
 			}
