@@ -41,8 +41,10 @@ typedef struct smtp_t {
 	auth_mode_t auth_mode;
 
 	const char *from;
-	const char *to;
-	const char *cc;
+	char *to[10];
+	int to_len;
+	char *cc[10];
+	int cc_len;
 } smtp_t;
 
 typedef struct config_t {
@@ -54,5 +56,9 @@ int initialize_config(const char *config_file);
 void free_config(void);
 int handler(void *user, const char *section, const char *name,
 	    const char *value);
+
+/* Utilities */
+void config_split_array_string(char *dest_array[], const char *value, int *len);
+void remove_spaces(char *s);
 
 #endif

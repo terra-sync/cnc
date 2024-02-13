@@ -10,6 +10,32 @@
 #define CHECK_SECTION(s) strcmp(section, s) == 0
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
 
+void remove_spaces(char *s)
+{
+	char *d = s;
+	do {
+		while (*d == ' ') {
+			++d;
+		}
+	} while ((*s++ = *d++));
+}
+
+void config_split_array_string(char *dest_array[], const char *value, int *len)
+{
+	int idx = 0;
+	char *temp_value = strdup(value);
+
+	char *str_ = strtok(temp_value, ",");
+	while (str_ != NULL && idx < 10) {
+		remove_spaces(str_);
+		dest_array[idx++] = strdup(str_);
+		str_ = strtok(NULL, ",");
+	}
+
+	*len = idx;
+	free(temp_value);
+}
+
 config_t *ini_config;
 
 int handler(void *user, const char *section, const char *name,
@@ -92,9 +118,13 @@ int handler(void *user, const char *section, const char *name,
 		} else if (MATCH("smtp", "from")) {
 			ini_config->smtp_config->from = strdup(value);
 		} else if (MATCH("smtp", "to")) {
-			ini_config->smtp_config->to = strdup(value);
+			config_split_array_string(
+				ini_config->smtp_config->to, value,
+				&ini_config->smtp_config->to_len);
 		} else if (MATCH("smtp", "cc")) {
-			ini_config->smtp_config->cc = strdup(value);
+			config_split_array_string(
+				ini_config->smtp_config->cc, value,
+				&ini_config->smtp_config->cc_len);
 		}
 	}
 
@@ -139,9 +169,8 @@ void free_config(void)
 	free((void *)ini_config->smtp_config->password);
 	free((void *)ini_config->smtp_config->smtp_port);
 	free((void *)ini_config->smtp_config->smtp_host);
-	free((void *)ini_config->smtp_config->to);
+
 	free((void *)ini_config->smtp_config->from);
-	free((void *)ini_config->smtp_config->cc);
 
 	free(ini_config->smtp_config);
 	free(ini_config->postgres_config);
