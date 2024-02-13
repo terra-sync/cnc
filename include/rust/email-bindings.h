@@ -11,7 +11,8 @@ typedef struct EmailInfo {
 	const char *from;
 	const char *const *to;
 	uintptr_t to_len;
-	const char *cc;
+	const char *const *cc;
+	uintptr_t cc_len;
 	const char *body;
 	const char *smtp_host;
 	const char *smtp_username;
@@ -43,7 +44,8 @@ typedef struct EmailInfo {
  *     const char* from = "sender@example.com";
  *     const char* to[] = {"recipient1@example.com", "recipient2@example.com"};
  *     size_t to_len = 2; // Number of recipients
- *     const char* cc = "cc@example.com";
+ *     const char* cc[] = {"recipient1@example.com", "recipient2@example.com"};
+ *     size_t cc_len = 2; // Number of recipients
  *     const char* body = "Hello from C! This is the email body.";
  *     const char *smtp_host = "posteo.de";
  *     const char *smtp_username = "username";
@@ -55,6 +57,7 @@ typedef struct EmailInfo {
  *             .to = to,
  *             .to_len = to_len,
  *             .cc = cc,
+ *             .cc_len = cc_len,
  *             .body = body,
  *             .smtp_host = smtp_host,
  *             .smtp_username = smtp_username,

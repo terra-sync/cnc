@@ -12,7 +12,8 @@ pub struct EmailInfo {
 	from: *const c_char,
 	to: *const *const c_char,
 	to_len: usize,
-	cc: *const c_char,
+	cc: *const *const c_char,
+	cc_len: usize,
 	body: *const c_char,
 
 	smtp_host: *const c_char,
@@ -59,7 +60,8 @@ fn c_char_to_string(str_: *const c_char) -> Result<String, i32> {
 ///     const char* from = "sender@example.com";
 ///     const char* to[] = {"recipient1@example.com", "recipient2@example.com"};
 ///     size_t to_len = 2; // Number of recipients
-///     const char* cc = "cc@example.com";
+///     const char* cc[] = {"recipient1@example.com", "recipient2@example.com"};
+///     size_t cc_len = 2; // Number of recipients
 ///     const char* body = "Hello from C! This is the email body.";
 ///     const char *smtp_host = "posteo.de";
 ///     const char *smtp_username = "username";
@@ -71,6 +73,7 @@ fn c_char_to_string(str_: *const c_char) -> Result<String, i32> {
 ///             .to = to,
 ///             .to_len = to_len,
 ///             .cc = cc,
+///             .cc_len = cc_len,
 ///             .body = body,
 ///             .smtp_host = smtp_host,
 ///             .smtp_username = smtp_username,
@@ -82,13 +85,9 @@ fn c_char_to_string(str_: *const c_char) -> Result<String, i32> {
 /// ```
 #[no_mangle]
 pub extern "C" fn send_email(email_info: EmailInfo) -> i32 {
-	tracing_subscriber::fmt::init();
-
 	let from_str = c_char_to_string(email_info.from).unwrap();
-	let cc_str = c_char_to_string(email_info.cc).unwrap();
 	let body_str = c_char_to_string(email_info.body).unwrap();
 
-	// Convert the 'to' C string array to a Vec of Rust Strings
 	let to_strs: Vec<String> = unsafe {
 		if email_info.to.is_null() {
 			return -1;
@@ -103,6 +102,25 @@ pub extern "C" fn send_email(email_info: EmailInfo) -> i32 {
 			.collect()
 	};
 
+	let cc_strs: Option<Vec<String>> = unsafe {
+		if !email_info.cc.is_null() {
+			let vec = slice::from_raw_parts(
+				email_info.cc,
+				email_info.cc_len,
+			)
+			.iter()
+			.map(|&c_str| {
+				CStr::from_ptr(c_str)
+					.to_string_lossy()
+					.into_owned()
+			})
+			.collect();
+			Some(vec)
+		} else {
+			None
+		}
+	};
+
 	let mut email_builder = Message::builder()
 		.from(from_str.parse().unwrap())
 		.subject("Calling Rust from C")
@@ -112,18 +130,14 @@ pub extern "C" fn send_email(email_info: EmailInfo) -> i32 {
 		email_builder = email_builder.to(addr.parse().unwrap());
 	}
 
-	match c_char_to_string(email_info.cc) {
-		Ok(str_) => {
+	if let Some(cc_strs) = cc_strs {
+		for cc_addr in cc_strs.iter() {
 			email_builder =
-				email_builder.cc(str_.parse().unwrap());
-		},
-		Err(_) => println!("No `cc` recipient provided."),
-	}
+				email_builder.cc(cc_addr.parse().unwrap());
+		}
+	};
 
-	let email = email_builder
-		.cc(cc_str.parse().unwrap())
-		.body(body_str)
-		.unwrap();
+	let email = email_builder.body(body_str).unwrap();
 
 	let creds = Credentials::new(
 		c_char_to_string(email_info.smtp_username).unwrap(),
@@ -138,13 +152,7 @@ pub extern "C" fn send_email(email_info: EmailInfo) -> i32 {
 		.build();
 
 	match mailer.send(&email) {
-		Ok(_) => {
-			println!("Email success.");
-			0
-		},
-		Err(_) => {
-			println!("Email failure.");
-			-1
-		},
+		Ok(_) => 0,
+		Err(_) => -1,
 	}
 }
