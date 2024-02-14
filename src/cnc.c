@@ -63,26 +63,29 @@ int process_args(int argc, char **argv)
 		return -1;
 	}
 
-	if (config_file != NULL) {
-		ret = initialize_config(config_file);
-		if (ret < 0) {
-			if (ret == -1) {
-				pr_error("Config: Error opening `.ini` file\n");
-			} else if (ret == -2) {
-				pr_error("Config: Error allocating memory\n");
-			}
+	if (config_file == NULL) {
+		help();
+		return 0;
+	}
 
-			free((void *)config_file);
-			return ret;
-		} else if (ret > 0) {
-			pr_error(
-				"Error parsing line: %d. Please check your `.ini` file\n",
-				ret);
-
-			free((void *)config_file);
-			free_config();
-			return ret;
+	ret = initialize_config(config_file);
+	if (ret < 0) {
+		if (ret == -1) {
+			pr_error("Config: Error opening `.ini` file\n");
+		} else if (ret == -2) {
+			pr_error("Config: Error allocating memory\n");
 		}
+
+		free((void *)config_file);
+		return ret;
+	} else if (ret > 0) {
+		pr_error(
+			"Error parsing line: %d. Please check your `.ini` file\n",
+			ret);
+
+		free((void *)config_file);
+		free_config();
+		return ret;
 	}
 
 	ret = execute_db_operations();
