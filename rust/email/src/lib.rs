@@ -123,7 +123,7 @@ pub extern "C" fn send_email(email_info: EmailInfo) -> i32 {
 
 	let mut email_builder = Message::builder()
 		.from(from_str.parse().unwrap())
-		.subject("Calling Rust from C")
+		.subject("CNC digest")
 		.header(ContentType::TEXT_PLAIN);
 
 	for addr in to_strs.iter() {
