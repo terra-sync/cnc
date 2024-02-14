@@ -26,6 +26,7 @@ typedef struct postgres_t {
 	const char *target_database;
 
 	backup_type backup_type;
+	bool email;
 } postgres_t;
 
 typedef enum auth_mode_t {
@@ -45,6 +46,8 @@ typedef struct smtp_t {
 	int to_len;
 	char *cc[10];
 	int cc_len;
+
+	bool enabled;
 } smtp_t;
 
 typedef struct config_t {
