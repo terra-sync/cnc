@@ -4,6 +4,30 @@
 /* Write/Read end for pipes */
 #define READ_END 0
 #define WRITE_END 1
+#define EMAIL_BODY_LENGTH 4096
+
+/*
+ *  read_buffer_pipe()
+ *
+ *  Returns:
+ *  0 on success
+ * -1 on failure reading from pipe
+ */
+int read_buffer_pipe(int *);
+
+/*
+ *  execve_binary()
+ 
+ *  This function utilizes a fork for calling `execve` and reads the
+ *  output through the usage of `read_buffer_pipe`.
+ *
+ * Returns:
+ *   0 Success
+ *  -1 Failure of`pg_dump` or `pg_restore`
+ *  -2 Failure of creation of fork() or pipe()
+ *
+ */
+int execve_binary(char *, char *const[], char *const[]);
 
 /*
  * This function is used to append a `\r` character before each `\n`, and it is needed
