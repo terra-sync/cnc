@@ -44,17 +44,12 @@ AC_CHECK_LIB([pq], [PQconnectdb], [], [
     AC_MSG_ERROR([*** libpq is required but missing. ***])
 ])
 
-# Check for libcurl
-AC_CHECK_LIB([curl], [curl_easy_init], [], [
-    AC_MSG_ERROR([*** libcurl is required but missing. ***])
-])
-
 # Checks for header files
 AC_CHECK_HEADERS([postgresql/libpq-fe.h])
 
 # Adjusting CFLAGS and LDFLAGS
 CFLAGS="$CFLAGS -Iinclude -I/usr/include/postgresql/ -Wall -g"
-LDFLAGS="$LDFLAGS -linih -lpq -lcurl"
+LDFLAGS="$LDFLAGS -linih -lpq"
 AC_SUBST([CFLAGS])
 AC_SUBST([LDFLAGS])
 
