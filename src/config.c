@@ -28,12 +28,11 @@ void config_split_array_string(char *dest_array[], const char *value, int *len)
 	char *str_ = strtok(temp_value, ",");
 	while (str_ != NULL && idx < 10) {
 		remove_spaces(str_);
-		dest_array[idx++] = strdup(str_);
+		dest_array[idx++] = str_;
 		str_ = strtok(NULL, ",");
 	}
 
 	*len = idx;
-	free(temp_value);
 }
 
 config_t *ini_config;
@@ -90,8 +89,16 @@ int handler(void *user, const char *section, const char *name,
 					"Accepted `backup_type` values are \"schema\" or \"full\".\n");
 				return 0;
 			}
-		} else {
-			return 0;
+		} else if (MATCH("postgres", "email")) {
+			if (strcmp("true", value) == 0) {
+				ini_config->postgres_config->email = true;
+			} else if (strcmp("false", value) == 0) {
+				ini_config->postgres_config->email = false;
+			} else {
+				pr_error(
+					"Accepted `enabled` values are \"true\" or \"false\".\n");
+				return 0;
+			}
 		}
 	}
 
@@ -125,6 +132,20 @@ int handler(void *user, const char *section, const char *name,
 			config_split_array_string(
 				ini_config->smtp_config->cc, value,
 				&ini_config->smtp_config->cc_len);
+		}
+	}
+
+	if (CHECK_SECTION("email")) {
+		if (MATCH("email", "enabled")) {
+			if (strcmp("true", value) == 0) {
+				ini_config->email = true;
+			} else if (strcmp("false", value) == 0) {
+				ini_config->email = false;
+			} else {
+				pr_error(
+					"Accepted `email` values are \"true\" or \"false\".\n");
+				return 0;
+			}
 		}
 	}
 
