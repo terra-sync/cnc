@@ -1,5 +1,5 @@
 bin_PROGRAMS = cnc
-cnc_SOURCES = src/cnc.c src/config.c src/db.c src/log.c src/main.c src/postgres.c
+cnc_SOURCES = src/cnc.c src/config.c src/db.c src/log.c src/main.c src/postgres.c src/util.c
 cnc_LDADD = -linih -lpq $(RUST_LIBS)
 cnc_CFLAGS = -Iinclude -I/usr/include/postgresql/ -Wall -g
 
@@ -22,7 +22,7 @@ clean-local:
 	done
 
 check_PROGRAMS = test
-test_SOURCES = src/cnc.c src/config.c src/db.c src/log.c src/postgres.c tests/cnc_test.c
+test_SOURCES = src/cnc.c src/config.c src/db.c src/log.c src/postgres.c tests/cnc_test.c src/util.c
 test_LDADD = -lcunit -linih -lpq
 test_CFLAGS = -Iinclude -I/usr/include/postgresql/ -Wall -g
 

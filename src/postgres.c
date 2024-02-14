@@ -1,9 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
-#include <sys/wait.h>
 
 #include "libpq-fe.h"
 
@@ -11,10 +7,11 @@
 #include "db/db.h"
 #include "db/postgres.h"
 #include "log.h"
+#include "rust/email-bindings.h"
+#include "util.h"
 
-/* Write/Read end for pipes */
-#define READ_END 0
-#define WRITE_END 1
+static char *email_body;
+static int email_body_size;
 
 extern config_t *ini_config;
 
@@ -29,11 +26,14 @@ static struct db_operations pg_db_ops = {
 int construct_pg(void)
 {
 	struct db_t *pg_db_t = (struct db_t *)malloc(sizeof(struct db_t));
-
+	email_body = malloc(EMAIL_BODY_LENGTH * sizeof(char));
 	pg_db_t->pg_conf = (postgres_t *)malloc(sizeof(postgres_t));
 	memcpy(pg_db_t->pg_conf, ini_config->postgres_config,
 	       sizeof(postgres_t));
-
+	email_body_size +=
+		snprintf(email_body, EMAIL_BODY_LENGTH,
+			 "Summary of Postgres Database: `%s`\r\n\r\n",
+			 pg_db_t->pg_conf->origin_database);
 	pg_db_ops.db = pg_db_t;
 	available_dbs[0] = &pg_db_ops;
 
@@ -61,6 +61,7 @@ int connect_pg(struct db_t *pg_db_t)
 	// Check if the database is `enabled` before attempting to connect
 	if (!pg_db_t->pg_conf->enabled) {
 		ret = -2;
+		free(email_body);
 		return ret;
 	}
 
@@ -84,6 +85,8 @@ int connect_pg(struct db_t *pg_db_t)
 	if (PQstatus(pg_db_t->origin_conn) != CONNECTION_OK) {
 		pr_debug("Postgres origin-database connection: Failed!\n");
 		pr_error("%s", PQerrorMessage(pg_db_t->origin_conn));
+		strncat(email_body, PQerrorMessage(pg_db_t->origin_conn),
+			EMAIL_BODY_LENGTH - 1);
 		ret = -1;
 		return ret;
 	}
@@ -94,6 +97,8 @@ int connect_pg(struct db_t *pg_db_t)
 	if (PQstatus(pg_db_t->target_conn) != CONNECTION_OK) {
 		pr_debug("Target-database connection: Failed!\n");
 		pr_error("%s", PQerrorMessage(pg_db_t->target_conn));
+		strncat(email_body, PQerrorMessage(pg_db_t->target_conn),
+			EMAIL_BODY_LENGTH - 1);
 		ret = -1;
 		return ret;
 	}
@@ -106,6 +111,29 @@ void close_pg(struct db_t *pg_db_t)
 {
 	PQfinish(pg_db_t->origin_conn);
 	PQfinish(pg_db_t->target_conn);
+
+	if (ini_config->smtp_config->enabled && pg_db_t->pg_conf->email) {
+		EmailInfo email_info = {
+			.from = ini_config->smtp_config->from,
+			.to = (const char *const *)ini_config->smtp_config->to,
+			.to_len = ini_config->smtp_config->to_len,
+			.cc = (const char *const *)ini_config->smtp_config->cc,
+			.cc_len = ini_config->smtp_config->cc_len,
+			.body = email_body,
+			.smtp_host = ini_config->smtp_config->smtp_host,
+			.smtp_username = ini_config->smtp_config->username,
+			.smtp_password = ini_config->smtp_config->password,
+		};
+
+		int result = send_email(email_info);
+		if (result < 0) {
+			pr_error("Unable to send email.\n");
+		} else {
+			pr_info("Email was successfully sent!\n");
+		}
+	}
+
+	free(email_body);
 	free(pg_db_t->pg_conf);
 }
 
@@ -132,70 +160,18 @@ int exec_command(const char *pg_command_path, char *const args[], char *pg_pass,
 {
 	char const *command_envp[3] = { pg_pass, prefixed_command_path, NULL };
 	int ret = execve_binary((char *)pg_command_path, args,
-				(char *const *)command_envp);
+				(char *const *)command_envp, email_body,
+				&email_body_size);
 
 	if (ret != 0) {
 		pr_error("`%s` failed\n", args[0]);
+		char temp_buffer[EMAIL_BODY_LENGTH - 1];
+		snprintf(temp_buffer, EMAIL_BODY_LENGTH - 1, "%s failed\r\n",
+			 args[0]);
+		strncat(email_body, temp_buffer, EMAIL_BODY_LENGTH - 1);
 	}
 
 	return ret;
-}
-
-/*
- * execve_binary
- *  This function utilizes a fork for calling `execve` and reads the
- *  output through the usage of `read_buffer_pipe`.
- *
- * Returns:
- *   0 Success
- *  -1 Failure of`pg_dump` or `pg_restore`
- *  -2 Failure of creation of fork() or pipe()
- *
- */
-int execve_binary(char *command_path, char *const command_args[],
-		  char *const envp[])
-{
-	// A pipe to read the output from the process.
-	int pipefd[2];
-	int pg_pid;
-	int wstatus;
-
-	if (pipe(pipefd) == -1) {
-		pr_error("Failure creating the pipe.\n");
-		return -2;
-	}
-
-	pg_pid = fork();
-	if (pg_pid == 0) {
-		close(pipefd[READ_END]);
-		dup2(pipefd[WRITE_END], STDERR_FILENO);
-		dup2(pipefd[WRITE_END], STDOUT_FILENO);
-		close(pipefd[WRITE_END]);
-		execve(command_path, command_args, envp);
-		pr_error("Error executing `pg_dump`\n");
-		pr_debug("`pg_dump` error: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
-	} else {
-		if (pg_pid == -1) {
-			pr_debug(
-				"`pg_dump` process failed to start: %s.\n Replication process will be terminated.\n",
-				strerror(errno));
-			pr_error("%s\n", strerror(errno));
-			return -2;
-		}
-	}
-	close(pipefd[WRITE_END]);
-	read_buffer_pipe(pipefd);
-
-	wait(&wstatus);
-	// Check the status of the forked process, anything other than 0 means failure.
-	if (wstatus != 0) {
-		pr_debug(
-			"`pg_dump` was unsuccessful. Replication process will be terminated.\n");
-		return -1;
-	}
-
-	return 0;
 }
 
 /*
@@ -261,7 +237,8 @@ int replicate(struct db_t *pg_db_t)
 	if (pg_bin) {
 		pr_debug("$PG_BIN=%s was found.\n", pg_bin);
 		command_path_size = strlen(pg_bin) + 1;
-		snprintf(command_path, command_path_size, "%s", pg_bin);
+	} else {
+		pr_warn("PG_BIN was not found.\n");
 	}
 	strncat(prefixed_command_path, command_path, command_path_size + 1);
 
@@ -272,6 +249,8 @@ int replicate(struct db_t *pg_db_t)
 			   prefixed_command_path);
 	if (ret != 0)
 		goto cleanup;
+	strcat(email_body, "\r\n");
+	email_body_size += strlen("\r\n");
 
 	setup_command(&pg_command_path, &pg_pass, PG_RESTORE_COMMAND,
 		      pg_db_t->pg_conf->target_password, command_path,
@@ -282,7 +261,14 @@ int replicate(struct db_t *pg_db_t)
 		goto cleanup;
 
 	pr_info("Database Replication was successful!\n");
-
+	char temp_buffer[EMAIL_BODY_LENGTH - 1];
+	email_body_size += snprintf(
+		temp_buffer, EMAIL_BODY_LENGTH - 1,
+		"\r\nReplication of Postgres Database: `%s` was successful.\r\n",
+		pg_db_t->pg_conf->origin_database);
+	strncat(email_body, temp_buffer, EMAIL_BODY_LENGTH - 1);
+	// Realloc according to the `email_body_size` so we have accurate size
+	email_body = realloc(email_body, email_body_size * sizeof(char) + 1);
 cleanup:
 	free(pg_command_path);
 	free(pg_pass);
@@ -295,17 +281,6 @@ void construct_dump_path(char *path)
 	int home_path_size = strlen(home_path) + 1;
 	snprintf(path, home_path_size, "%s", home_path);
 	strcat(path, "/backup.dump");
-}
-
-void read_buffer_pipe(int *pipefd)
-{
-	char buffer[4096] = { 0 };
-	int nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
-	while (nbytes > 0) {
-		pr_info("%s", buffer);
-		memset(buffer, 0, sizeof(buffer));
-		nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
-	}
 }
 
 ADD_FUNC(construct_pg);
