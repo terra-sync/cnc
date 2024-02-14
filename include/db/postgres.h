@@ -10,11 +10,18 @@
 #define PG_PASS_PREFIX 11
 #define PG_DUMP_COMMAND "pg_dump"
 #define PG_RESTORE_COMMAND "pg_restore"
+#define EMAIL_BODY_LENGTH 4096
 
-void read_buffer_pipe(int *);
+/*
+ *  read_buffer_pipe()
+ *
+ *  Returns:
+ *  0 on success
+ * -1 on failure reading from pipe
+ */
+int read_buffer_pipe(int *);
 
 void construct_dump_path(char *);
-
 int construct_pg(void);
 
 int connect_pg(struct db_t *);
