@@ -28,11 +28,17 @@ void config_split_array_string(char *dest_array[], const char *value, int *len)
 	char *str_ = strtok(temp_value, ",");
 	while (str_ != NULL && idx < 10) {
 		remove_spaces(str_);
-		dest_array[idx++] = str_;
+		dest_array[idx] = strdup(str_);
+		if (dest_array[idx] == NULL) {
+			free(temp_value);
+			return;
+		}
+		idx++;
 		str_ = strtok(NULL, ",");
 	}
 
 	*len = idx;
+	free(temp_value); // Free the duplicated string after tokenizing.
 }
 
 config_t *ini_config;
@@ -195,6 +201,13 @@ void free_config(void)
 	free((void *)ini_config->smtp_config->smtp_host);
 
 	free((void *)ini_config->smtp_config->from);
+
+	for (int i = 0; i < ini_config->smtp_config->to_len; i++) {
+		free(ini_config->smtp_config->to[i]);
+	}
+	for (int i = 0; i < ini_config->smtp_config->cc_len; i++) {
+		free(ini_config->smtp_config->cc[i]);
+	}
 
 	free(ini_config->smtp_config);
 	free(ini_config->postgres_config);
