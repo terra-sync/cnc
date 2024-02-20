@@ -1,8 +1,10 @@
 #include "db/db.h"
 #include "db/postgres.h"
+#include "log.h"
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <errno.h>
 
 /* We need to hold info of how many
  * available databases implementations
@@ -19,7 +21,9 @@ int execute_db_operations(void)
 
 	section_foreach_entry(my_array, init_db_func_ptr_t, entry)
 	{
-		entry->func();
+		if (entry->func() == -ENOMEM) {
+			pr_error("Error allocating memory\n");
+		}
 	}
 
 	for (int i = 0; i < MAX_AVAILABLE_DBS; i++) {

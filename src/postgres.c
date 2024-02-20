@@ -1,5 +1,6 @@
 #include <string.h>
 #include <unistd.h>
+#include <error.h>
 
 #include "libpq-fe.h"
 
@@ -25,9 +26,9 @@ static struct db_operations pg_db_ops = {
 
 int construct_pg(void)
 {
-	struct db_t *pg_db_t = (struct db_t *)malloc(sizeof(struct db_t));
-	email_body = malloc(EMAIL_BODY_LENGTH * sizeof(char));
-	pg_db_t->pg_conf = (postgres_t *)malloc(sizeof(postgres_t));
+	struct db_t *pg_db_t = CNC_MALLOC(sizeof(struct db_t));
+	email_body = CNC_MALLOC(EMAIL_BODY_LENGTH * sizeof(char));
+	pg_db_t->pg_conf = CNC_MALLOC(sizeof(postgres_t));
 	memcpy(pg_db_t->pg_conf, ini_config->postgres_config,
 	       sizeof(postgres_t));
 	email_body_size +=
