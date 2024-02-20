@@ -1,10 +1,21 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <errno.h>
+
 /* Write/Read end for pipes */
 #define READ_END 0
 #define WRITE_END 1
 #define EMAIL_BODY_LENGTH 4096
+
+#define CNC_MALLOC(SIZE)                  \
+	({                                \
+		void *ptr = malloc(SIZE); \
+		if (ptr == NULL) {        \
+			return -ENOMEM;   \
+		}                         \
+		ptr;                      \
+	})
 
 /*
  *  read_buffer_pipe()

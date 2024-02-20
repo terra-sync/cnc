@@ -2,9 +2,11 @@
 
 #include "cnc.h"
 #include "config.h"
+#include "util.h"
 
 #include <stdlib.h>
 #include <ini.h>
+#include <stdint.h>
 
 extern config_t *ini_config;
 
@@ -48,7 +50,7 @@ void test_backup_full(void)
 	ini_config = (config_t *)malloc(sizeof(config_t));
 	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
 	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
-	ini_parse_string("[postgres]\nbackupt_type=full", handler, ini_config);
+	ini_parse_string("[postgres]\nbackup_type=full", handler, ini_config);
 	CU_ASSERT_EQUAL(ini_config->postgres_config->backup_type, FULL);
 }
 
@@ -83,6 +85,24 @@ void test_empty_backup_type(void)
 	CU_ASSERT_EQUAL(result, 2);
 }
 
+void test_malloc_macro_success(void)
+{
+	void *result = CNC_MALLOC(10);
+	CU_ASSERT_PTR_NOT_NULL(result);
+	free(result);
+}
+
+int return_result_of_malloc_macro(void)
+{
+	CNC_MALLOC(-1);
+}
+
+void test_malloc_macro_failure(void)
+{
+	int result = return_result_of_malloc_macro();
+	CU_ASSERT_EQUAL(result, -ENOMEM);
+}
+
 typedef struct CU_test_info {
 	const char *test_name;
 	void (*test_func)(void);
@@ -96,6 +116,8 @@ CU_test_info test_cases[] = {
 	{ "test_backup_schema_only", test_backup_schema_only },
 	{ "test_invalid_backup_type", test_invalid_backup_type },
 	{ "test_empty_backup_type", test_empty_backup_type },
+	{ "test_malloc_macro_sucess", test_malloc_macro_success },
+	{ "test_malloc_macro_failure", test_malloc_macro_failure },
 	{ NULL, NULL } // Array must be NULL terminated
 };
 

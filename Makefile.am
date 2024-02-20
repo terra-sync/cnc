@@ -23,7 +23,7 @@ clean-local:
 
 check_PROGRAMS = test
 test_SOURCES = src/cnc.c src/config.c src/db.c src/log.c src/postgres.c tests/cnc_test.c src/util.c
-test_LDADD = -lcunit -linih -lpq
-test_CFLAGS = -Iinclude -I/usr/include/postgresql/ -Wall -g
+test_LDADD = -lcunit -linih -lpq $(RUST_LIBS)
+test_CFLAGS = -Iinclude -I/usr/include/postgresql/ -Wall -Wno-return-type -Wno-alloc-size-larger-than -g
 
 CLEANFILES = $(bin_PROGRAMS) $(check_PROGRAMS) *.o

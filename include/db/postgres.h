@@ -12,6 +12,15 @@
 #define PG_RESTORE_COMMAND "pg_restore"
 
 void construct_dump_path(char *);
+
+/*
+ *  construct_pg
+ *
+ *  Returns:
+ *  0 on success
+ * -ENOMEM Error allocating memory
+ *
+ */
 int construct_pg(void);
 
 int connect_pg(struct db_t *);

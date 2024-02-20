@@ -4,8 +4,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ini.h>
+#include <error.h>
 
 #include "log.h"
+#include "util.h"
 
 #define CHECK_SECTION(s) strcmp(section, s) == 0
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
@@ -166,16 +168,17 @@ int handler(void *user, const char *section, const char *name,
  *
  *   0 Success
  *  -1 Error opening File
- *  -2 Error allocating Memory
+ *  -2 Error allocating memory (`inih` library)
+ *  -ENOMEM Error allocating memory (CNC_MALLOC macro)
  *  >0 Number of line with parsing error
  */
 int initialize_config(const char *config_file)
 {
 	int ret = 0;
 
-	ini_config = (config_t *)malloc(sizeof(config_t));
-	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
-	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
+	ini_config = CNC_MALLOC(sizeof(config_t));
+	ini_config->postgres_config = CNC_MALLOC(sizeof(postgres_t));
+	ini_config->smtp_config = CNC_MALLOC(sizeof(smtp_t));
 	ret = ini_parse(config_file, handler, ini_config);
 
 	return ret;
