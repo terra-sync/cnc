@@ -3,8 +3,12 @@
 
 #include <stdbool.h>
 
-// enum backup_type - schema-only or full backup strategy
+typedef struct d_str_t {
+	const char *origin;
+	const char *target;
+} d_str_t;
 
+// enum backup_type - schema-only or full backup strategy
 typedef enum backup_type {
 	SCHEMA = 0,
 	FULL,
@@ -13,17 +17,11 @@ typedef enum backup_type {
 typedef struct postgres_t {
 	bool enabled;
 
-	const char *origin_host;
-	const char *origin_user;
-	const char *origin_password;
-	const char *origin_port;
-	const char *origin_database;
-
-	const char *target_host;
-	const char *target_user;
-	const char *target_password;
-	const char *target_port;
-	const char *target_database;
+	d_str_t host;
+	d_str_t user;
+	d_str_t password;
+	d_str_t port;
+	d_str_t database;
 
 	backup_type backup_type;
 	bool email;
