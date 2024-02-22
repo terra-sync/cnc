@@ -34,7 +34,7 @@ int construct_pg(void)
 	email_body_size +=
 		snprintf(email_body, EMAIL_BODY_LENGTH,
 			 "Summary of Postgres Database: `%s`\r\n\r\n",
-			 pg_db_t->pg_conf->origin_database);
+			 pg_db_t->pg_conf->database.origin);
 	pg_db_ops.db = pg_db_t;
 	available_dbs[0] = &pg_db_ops;
 
@@ -70,16 +70,16 @@ int connect_pg(struct db_t *pg_db_t)
 	const char *keywords[] = { "host", "user",   "password",
 				   "port", "dbname", NULL };
 	// Construct the array that will hold the values of the fields.
-	const char *origin_values[] = { pg_db_t->pg_conf->origin_host,
-					pg_db_t->pg_conf->origin_user,
-					pg_db_t->pg_conf->origin_password,
-					pg_db_t->pg_conf->origin_port,
-					pg_db_t->pg_conf->origin_database };
-	const char *target_values[] = { pg_db_t->pg_conf->target_host,
-					pg_db_t->pg_conf->target_user,
-					pg_db_t->pg_conf->target_password,
-					pg_db_t->pg_conf->target_port,
-					pg_db_t->pg_conf->target_database };
+	const char *origin_values[] = { pg_db_t->pg_conf->host.origin,
+					pg_db_t->pg_conf->user.origin,
+					pg_db_t->pg_conf->password.origin,
+					pg_db_t->pg_conf->port.origin,
+					pg_db_t->pg_conf->database.origin };
+	const char *target_values[] = { pg_db_t->pg_conf->host.target,
+					pg_db_t->pg_conf->user.target,
+					pg_db_t->pg_conf->password.target,
+					pg_db_t->pg_conf->port.target,
+					pg_db_t->pg_conf->database.target };
 
 	// Connect to origin-database.
 	pg_db_t->origin_conn = PQconnectdbParams(keywords, origin_values, 0);
@@ -202,15 +202,15 @@ int replicate(struct db_t *pg_db_t)
 	char *const dump_args[] = {
 		PG_DUMP_COMMAND,
 		"-h",
-		(char *const)pg_db_t->pg_conf->origin_host,
+		(char *const)pg_db_t->pg_conf->host.origin,
 		"-F",
 		"custom",
 		"-p",
-		(char *const)pg_db_t->pg_conf->origin_port,
+		(char *const)pg_db_t->pg_conf->port.origin,
 		"-U",
-		(char *const)pg_db_t->pg_conf->origin_user,
+		(char *const)pg_db_t->pg_conf->user.origin,
 		"-d",
-		(char *const)pg_db_t->pg_conf->origin_database,
+		(char *const)pg_db_t->pg_conf->database.origin,
 		"-f",
 		backup_path,
 		"-v",
@@ -221,13 +221,13 @@ int replicate(struct db_t *pg_db_t)
 	char *const restore_args[] = {
 		PG_RESTORE_COMMAND,
 		"-h",
-		(char *const)pg_db_t->pg_conf->target_host,
+		(char *const)pg_db_t->pg_conf->host.target,
 		"-p",
-		(char *const)pg_db_t->pg_conf->target_port,
+		(char *const)pg_db_t->pg_conf->port.target,
 		"-U",
-		(char *const)pg_db_t->pg_conf->target_user,
+		(char *const)pg_db_t->pg_conf->user.target,
 		"-d",
-		(char *const)pg_db_t->pg_conf->target_database,
+		(char *const)pg_db_t->pg_conf->database.target,
 		backup_path,
 		"-v",
 		NULL
@@ -244,7 +244,7 @@ int replicate(struct db_t *pg_db_t)
 	strncat(prefixed_command_path, command_path, command_path_size + 1);
 
 	setup_command(&pg_command_path, &pg_pass, PG_DUMP_COMMAND,
-		      pg_db_t->pg_conf->origin_password, command_path,
+		      pg_db_t->pg_conf->password.origin, command_path,
 		      command_path_size, strlen(PG_DUMP_COMMAND));
 	ret = exec_command(pg_command_path, dump_args, pg_pass,
 			   prefixed_command_path);
@@ -254,7 +254,7 @@ int replicate(struct db_t *pg_db_t)
 	email_body_size += strlen("\r\n");
 
 	setup_command(&pg_command_path, &pg_pass, PG_RESTORE_COMMAND,
-		      pg_db_t->pg_conf->target_password, command_path,
+		      pg_db_t->pg_conf->password.target, command_path,
 		      command_path_size, strlen(PG_RESTORE_COMMAND));
 	ret = exec_command(pg_command_path, restore_args, pg_pass,
 			   prefixed_command_path);
@@ -266,7 +266,7 @@ int replicate(struct db_t *pg_db_t)
 	email_body_size += snprintf(
 		temp_buffer, EMAIL_BODY_LENGTH - 1,
 		"\r\nReplication of Postgres Database: `%s` was successful.\r\n",
-		pg_db_t->pg_conf->origin_database);
+		pg_db_t->pg_conf->database.origin);
 	strncat(email_body, temp_buffer, EMAIL_BODY_LENGTH - 1);
 	// Realloc according to the `email_body_size` so we have accurate size
 	email_body = realloc(email_body, email_body_size * sizeof(char) + 1);

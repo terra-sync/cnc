@@ -62,34 +62,34 @@ int handler(void *user, const char *section, const char *name,
 				return 0;
 			}
 		} else if (MATCH("postgres", "origin_host")) {
-			ini_config->postgres_config->origin_host =
+			ini_config->postgres_config->host.origin =
 				strdup(value);
 		} else if (MATCH("postgres", "origin_user")) {
-			ini_config->postgres_config->origin_user =
+			ini_config->postgres_config->user.origin =
 				strdup(value);
 		} else if (MATCH("postgres", "origin_password")) {
-			ini_config->postgres_config->origin_password =
+			ini_config->postgres_config->password.origin =
 				strdup(value);
 		} else if (MATCH("postgres", "origin_port")) {
-			ini_config->postgres_config->origin_port =
+			ini_config->postgres_config->port.origin =
 				strdup(value);
 		} else if (MATCH("postgres", "origin_database")) {
-			ini_config->postgres_config->origin_database =
+			ini_config->postgres_config->database.origin =
 				strdup(value);
 		} else if (MATCH("postgres", "target_host")) {
-			ini_config->postgres_config->target_host =
+			ini_config->postgres_config->host.target =
 				strdup(value);
 		} else if (MATCH("postgres", "target_user")) {
-			ini_config->postgres_config->target_user =
+			ini_config->postgres_config->user.target =
 				strdup(value);
 		} else if (MATCH("postgres", "target_password")) {
-			ini_config->postgres_config->target_password =
+			ini_config->postgres_config->password.target =
 				strdup(value);
 		} else if (MATCH("postgres", "target_port")) {
-			ini_config->postgres_config->target_port =
+			ini_config->postgres_config->port.target =
 				strdup(value);
 		} else if (MATCH("postgres", "target_database")) {
-			ini_config->postgres_config->target_database =
+			ini_config->postgres_config->database.target =
 				strdup(value);
 		} else if (MATCH("postgres", "backup_type")) {
 			if (strcmp("schema", value) == 0) {
@@ -186,17 +186,17 @@ int initialize_config(const char *config_file)
 
 void free_config(void)
 {
-	free((void *)ini_config->postgres_config->origin_host);
-	free((void *)ini_config->postgres_config->origin_user);
-	free((void *)ini_config->postgres_config->origin_password);
-	free((void *)ini_config->postgres_config->origin_port);
-	free((void *)ini_config->postgres_config->origin_database);
+	free((void *)ini_config->postgres_config->host.origin);
+	free((void *)ini_config->postgres_config->user.origin);
+	free((void *)ini_config->postgres_config->password.origin);
+	free((void *)ini_config->postgres_config->port.origin);
+	free((void *)ini_config->postgres_config->database.origin);
 
-	free((void *)ini_config->postgres_config->target_host);
-	free((void *)ini_config->postgres_config->target_user);
-	free((void *)ini_config->postgres_config->target_password);
-	free((void *)ini_config->postgres_config->target_port);
-	free((void *)ini_config->postgres_config->target_database);
+	free((void *)ini_config->postgres_config->host.target);
+	free((void *)ini_config->postgres_config->user.target);
+	free((void *)ini_config->postgres_config->password.target);
+	free((void *)ini_config->postgres_config->port.target);
+	free((void *)ini_config->postgres_config->database.target);
 
 	free((void *)ini_config->smtp_config->username);
 	free((void *)ini_config->smtp_config->password);
