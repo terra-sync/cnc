@@ -1,13 +1,14 @@
 #include "config.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ini.h>
-#include <error.h>
 
 #include "log.h"
 #include "util.h"
+
+config_t *ini_config;
+extern FILE *log_file;
 
 #define CHECK_SECTION(s) strcmp(section, s) == 0
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
@@ -43,12 +44,17 @@ void config_split_array_string(char *dest_array[], const char *value, int *len)
 	free(temp_value); // Free the duplicated string after tokenizing.
 }
 
-config_t *ini_config;
-
 int handler(void *user, const char *section, const char *name,
 	    const char *value)
 {
 	ini_config = (config_t *)user;
+
+	if (CHECK_SECTION("general")) {
+		if (MATCH("general", "log_filepath")) {
+			ini_config->general_config->log_filepath =
+				strdup(value);
+		}
+	}
 
 	if (CHECK_SECTION("postgres")) {
 		if (MATCH("postgres", "enabled")) {
@@ -163,23 +169,38 @@ int handler(void *user, const char *section, const char *name,
 	return 1;
 }
 
-/* 
- * initialize_config
- *
- *   0 Success
- *  -1 Error opening File
- *  -2 Error allocating memory (`inih` library)
- *  -ENOMEM Error allocating memory (CNC_MALLOC macro)
- *  >0 Number of line with parsing error
- */
 int initialize_config(const char *config_file)
 {
 	int ret = 0;
+	char *log_filepath = NULL;
+	char *log_filename = malloc(sizeof(char) * 256);
 
 	ini_config = CNC_MALLOC(sizeof(config_t));
 	ini_config->postgres_config = CNC_MALLOC(sizeof(postgres_t));
 	ini_config->smtp_config = CNC_MALLOC(sizeof(smtp_t));
+	ini_config->general_config = CNC_MALLOC(sizeof(general_t));
+	ini_config->general_config->log_filepath = NULL;
 	ret = ini_parse(config_file, handler, ini_config);
+
+	if (ret != 0) {
+		free(log_filename);
+		return ret;
+	}
+	ret = construct_log_filepath(ini_config->general_config->log_filepath,
+				     &log_filepath);
+	if (ret != 0) {
+		free(log_filename);
+		return ret;
+	}
+	construct_log_filename(&log_filename, log_filepath);
+	log_file = fopen(log_filename, "a");
+
+	if (log_file == NULL) {
+		return -3;
+	}
+
+	free(log_filepath);
+	free(log_filename);
 
 	return ret;
 }
@@ -203,6 +224,9 @@ void free_config(void)
 	free((void *)ini_config->smtp_config->smtp_port);
 	free((void *)ini_config->smtp_config->smtp_host);
 
+	if (ini_config->general_config->log_filepath != NULL) {
+		free((void *)ini_config->general_config->log_filepath);
+	}
 	free((void *)ini_config->smtp_config->from);
 
 	for (int i = 0; i < ini_config->smtp_config->to_len; i++) {
@@ -214,5 +238,9 @@ void free_config(void)
 
 	free(ini_config->smtp_config);
 	free(ini_config->postgres_config);
+	free(ini_config->general_config);
 	free(ini_config);
+	if (log_file != NULL) {
+		fclose(log_file);
+	}
 }

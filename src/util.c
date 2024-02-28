@@ -1,13 +1,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 #include "util.h"
 #include "log.h"
 
-void format_buffer(char *buffer, int *email_body_size)
+extern FILE *log_file;
+
+void format_buffer(char *buffer)
 {
 	int i = 0, num_of_new_lines = 0;
 	while (buffer[i] != '\0') {
@@ -22,13 +24,12 @@ void format_buffer(char *buffer, int *email_body_size)
 		if (buffer[i + num_of_new_lines] == '\n') {
 			num_of_new_lines--;
 			buffer[i + num_of_new_lines] = '\r';
-			*email_body_size += sizeof('\r');
 		}
 	}
 }
 
 int execve_binary(char *command_path, char *const command_args[],
-		  char *const envp[], char *email_body, int *email_body_size)
+		  char *const envp[])
 {
 	// A pipe to read the output from the process.
 	int pipefd[2];
@@ -36,9 +37,8 @@ int execve_binary(char *command_path, char *const command_args[],
 	int wstatus;
 
 	if (pipe(pipefd) == -1) {
-		pr_error("Failure creating the pipe.\n");
-		strncat(email_body, "Failure creating the pipe\r\n",
-			EMAIL_BODY_LENGTH);
+		pr_error_fd("Failure creating the pipe.\n");
+
 		return -2;
 	}
 	pg_pid = fork();
@@ -47,39 +47,27 @@ int execve_binary(char *command_path, char *const command_args[],
 		dup2(pipefd[WRITE_END], STDERR_FILENO);
 		dup2(pipefd[WRITE_END], STDOUT_FILENO);
 		close(pipefd[WRITE_END]);
+
 		execve(command_path, command_args, envp);
-		pr_error("Error executing `%s`\n", command_path);
+		pr_error_fd("Error executing `%s`\n", command_path);
 		pr_debug("`%s` error: %s\n", command_path, strerror(errno));
-		char temp_buffer[EMAIL_BODY_LENGTH - 1];
-		*email_body_size += snprintf(temp_buffer, EMAIL_BODY_LENGTH - 1,
-					     "Error executing `%s`\r\n",
-					     command_path);
-		strncat(email_body, temp_buffer, EMAIL_BODY_LENGTH - 1);
+
 		exit(EXIT_FAILURE);
 	} else {
 		if (pg_pid == -1) {
 			pr_debug(
 				"`%s` process failed to start: %s.\n Replication process will be terminated.\n",
 				command_path, strerror(errno));
-			pr_error("%s\n", strerror(errno));
-			char temp_buffer[EMAIL_BODY_LENGTH - 1];
-			snprintf(temp_buffer, EMAIL_BODY_LENGTH - 1,
-				 "`%s` failed to start: `%s`\r\n", command_path,
-				 strerror(errno));
-			strncat(email_body, temp_buffer, EMAIL_BODY_LENGTH - 1);
+			pr_error_fd("%s\n", strerror(errno));
 
 			return -2;
 		}
 	}
 	close(pipefd[WRITE_END]);
 
-	if (read_buffer_pipe(pipefd, email_body, email_body_size) != 0) {
-		pr_error("Error reading from pipe\n");
+	if (read_buffer_pipe(pipefd) != 0) {
+		pr_error_fd("Error reading from pipe\n");
 		pr_debug("`read_buffer_pipe` error: %s\n", strerror(errno));
-		char temp_buffer[EMAIL_BODY_LENGTH - 1];
-		snprintf(temp_buffer, EMAIL_BODY_LENGTH - 1,
-			 "`read_buffer_pipe` error : %s\r\n", strerror(errno));
-		strncat(email_body, temp_buffer, EMAIL_BODY_LENGTH - 1);
 	}
 
 	wait(&wstatus);
@@ -88,50 +76,105 @@ int execve_binary(char *command_path, char *const command_args[],
 		pr_debug(
 			"`%s` was unsuccessful. Replication process will be terminated.\n",
 			command_path);
-		char temp_buffer[EMAIL_BODY_LENGTH - 1];
-		snprintf(temp_buffer, EMAIL_BODY_LENGTH - 1,
-			 "`%s` was unsuccessful\r\n", command_path);
-		strncat(email_body, temp_buffer, EMAIL_BODY_LENGTH - 1);
+		pr_error_fd("`%s` was unsuccessful\r\n", command_path);
 
 		return -1;
 	}
 	return 0;
 }
 
-int read_buffer_pipe(int *pipefd, char *email_body, int *email_body_size)
+int read_buffer_pipe(int *pipefd)
 {
 	char buffer[4096] = { 0 };
 	int nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
-	int no_of_new_lines = 0;
-
-	// We keep track of the email body size so we can correctly reallocate memory if needed.
-	*email_body_size += nbytes;
 
 	if (nbytes < 0) {
 		return -1;
 	}
 
 	while (nbytes > 0) {
-		pr_info("%s", buffer);
-		format_buffer(buffer, email_body_size);
-
-		if (*email_body_size > 4096) {
-			/*
-			 * If we exceed 4096 we should realloc 8192 to make sure
-			 * that we do not overflow.
-			 */
-			email_body =
-				realloc(email_body, 8196 * sizeof(char) + 1);
-		}
-
-		strncat(email_body, buffer, nbytes + no_of_new_lines + 1);
+		fprintf(log_file, "%s", buffer);
 		memset(buffer, 0, sizeof(buffer));
 		nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
+
 		if (nbytes < 0) {
 			return -1;
 		}
+	}
 
-		*email_body_size += nbytes;
+	return 0;
+}
+
+/*
+ *  mkdir_p()
+ *
+ *  Returns:
+ *  0 Success
+ * -1 Failure
+ */
+int mkdir_p(char *path)
+{
+	int ret = 0;
+	struct stat st = { 0 };
+
+	ret = stat(path, &st);
+	if (ret == 0) {
+		if (access(path, W_OK) != 0) {
+			pr_error(
+				"Error accessing directory %s, permission denied.\n",
+				path);
+			return -1;
+		}
+	} else {
+		/*
+		 * We use the `p` pointer to find each '/', then we temporary replace the '/'
+		 * character with '\0', so we can actually create the directory.
+		 * After that the '\0' gets replaced with '/' so we can continue iterating
+		 * through the path. The final directory won't be created this way, therefore
+		 * we have another call to `mkdir` after our `for` loop to make sure all the
+		 * directories are created.
+		 */
+		char *p;
+		for (p = path + 1; *p; p++) {
+			if (*p == '/') {
+				*p = '\0';
+				ret = mkdir(path, 0777);
+				if (ret != 0 && errno == EACCES) {
+					pr_error(
+						"Error creating directory %s, permission denied.\n",
+						path);
+					return ret;
+				}
+				*p = '/';
+			}
+		}
+
+		ret = mkdir(path, 0777);
+		if (ret != 0 && errno == EACCES) {
+			pr_error(
+				"Error creating directory %s, permission denied.\n",
+				path);
+			return ret;
+		}
+
+		size_t len = strlen(path);
+		if (len > 0 && path[len - 1] != '/') {
+			strcat(path, "/");
+		}
+	}
+
+	return 0;
+}
+
+int cnc_strdup(char **string, char *string_to_dup)
+{
+	char *temp_string = strdup(string_to_dup);
+	if (temp_string != NULL) {
+		*string = temp_string;
+	} else {
+		pr_error("strdup: Failed to allocate memory.\n");
+		free(temp_string);
+		return -ENOMEM;
 	}
 
 	return 0;
