@@ -8,9 +8,11 @@
 #include "config.h"
 #include "db/db.h"
 #include "cnc.h"
+#include "util.h"
 
 extern config_t *ini_config;
 extern bool verbose;
+extern FILE *log_file;
 
 static struct option options[] = {
 	{ "config-file", required_argument, NULL, 'f' },
@@ -81,7 +83,7 @@ int process_args(int argc, char **argv)
 		free((void *)config_file);
 		return ret;
 	} else if (ret > 0) {
-		pr_error(
+		pr_error_fd(
 			"Error parsing line: %d. Please check your `.ini` file\n",
 			ret);
 
@@ -91,7 +93,6 @@ int process_args(int argc, char **argv)
 	}
 
 	ret = execute_db_operations();
-
 	free((void *)config_file);
 	free_config();
 

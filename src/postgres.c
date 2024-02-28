@@ -1,6 +1,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <error.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "libpq-fe.h"
 
@@ -11,13 +13,10 @@
 #include "rust/email-bindings.h"
 #include "util.h"
 
-static char *email_body;
-static int email_body_size;
-
+extern FILE *log_file;
 extern config_t *ini_config;
 
 extern struct db_operations **available_dbs;
-
 static struct db_operations pg_db_ops = {
 	.connect = connect_pg,
 	.close = close_pg,
@@ -27,14 +26,14 @@ static struct db_operations pg_db_ops = {
 int construct_pg(void)
 {
 	struct db_t *pg_db_t = CNC_MALLOC(sizeof(struct db_t));
-	email_body = CNC_MALLOC(EMAIL_BODY_LENGTH * sizeof(char));
+
 	pg_db_t->pg_conf = CNC_MALLOC(sizeof(postgres_t));
 	memcpy(pg_db_t->pg_conf, ini_config->postgres_config,
 	       sizeof(postgres_t));
-	email_body_size +=
-		snprintf(email_body, EMAIL_BODY_LENGTH,
-			 "Summary of Postgres Database: `%s`\r\n\r\n",
-			 pg_db_t->pg_conf->database.origin);
+
+	pr_info_fd("Summary of Postgres Database: `%s`\n\n",
+		   pg_db_t->pg_conf->database.origin);
+
 	pg_db_ops.db = pg_db_t;
 	available_dbs[0] = &pg_db_ops;
 
@@ -62,7 +61,6 @@ int connect_pg(struct db_t *pg_db_t)
 	// Check if the database is `enabled` before attempting to connect
 	if (!pg_db_t->pg_conf->enabled) {
 		ret = -2;
-		free(email_body);
 		return ret;
 	}
 
@@ -84,10 +82,9 @@ int connect_pg(struct db_t *pg_db_t)
 	// Connect to origin-database.
 	pg_db_t->origin_conn = PQconnectdbParams(keywords, origin_values, 0);
 	if (PQstatus(pg_db_t->origin_conn) != CONNECTION_OK) {
-		pr_debug("Postgres origin-database connection: Failed!\n");
-		pr_error("%s", PQerrorMessage(pg_db_t->origin_conn));
-		strncat(email_body, PQerrorMessage(pg_db_t->origin_conn),
-			EMAIL_BODY_LENGTH - 1);
+		pr_debug_fd("Postgres origin-database connection: Failed!\n");
+		pr_error_fd("%s", PQerrorMessage(pg_db_t->origin_conn));
+
 		ret = -1;
 		return ret;
 	}
@@ -96,10 +93,9 @@ int connect_pg(struct db_t *pg_db_t)
 	// Connect to target-database.
 	pg_db_t->target_conn = PQconnectdbParams(keywords, target_values, 0);
 	if (PQstatus(pg_db_t->target_conn) != CONNECTION_OK) {
-		pr_debug("Target-database connection: Failed!\n");
-		pr_error("%s", PQerrorMessage(pg_db_t->target_conn));
-		strncat(email_body, PQerrorMessage(pg_db_t->target_conn),
-			EMAIL_BODY_LENGTH - 1);
+		pr_debug_fd("Target-database connection: Failed!\n");
+		pr_error_fd("%s", PQerrorMessage(pg_db_t->target_conn));
+
 		ret = -1;
 		return ret;
 	}
@@ -112,30 +108,8 @@ void close_pg(struct db_t *pg_db_t)
 {
 	PQfinish(pg_db_t->origin_conn);
 	PQfinish(pg_db_t->target_conn);
-
-	if (ini_config->smtp_config->enabled && pg_db_t->pg_conf->email) {
-		EmailInfo email_info = {
-			.from = ini_config->smtp_config->from,
-			.to = (const char *const *)ini_config->smtp_config->to,
-			.to_len = ini_config->smtp_config->to_len,
-			.cc = (const char *const *)ini_config->smtp_config->cc,
-			.cc_len = ini_config->smtp_config->cc_len,
-			.body = email_body,
-			.smtp_host = ini_config->smtp_config->smtp_host,
-			.smtp_username = ini_config->smtp_config->username,
-			.smtp_password = ini_config->smtp_config->password,
-		};
-
-		int result = send_email(email_info);
-		if (result < 0) {
-			pr_error("Unable to send email.\n");
-		} else {
-			pr_info("Email was successfully sent!\n");
-		}
-	}
-
-	free(email_body);
 	free(pg_db_t->pg_conf);
+	free(pg_db_t);
 }
 
 void setup_command(char **pg_command_path, char **pg_pass, const char *command,
@@ -161,15 +135,10 @@ int exec_command(const char *pg_command_path, char *const args[], char *pg_pass,
 {
 	char const *command_envp[3] = { pg_pass, prefixed_command_path, NULL };
 	int ret = execve_binary((char *)pg_command_path, args,
-				(char *const *)command_envp, email_body,
-				&email_body_size);
+				(char *const *)command_envp);
 
 	if (ret != 0) {
-		pr_error("`%s` failed\n", args[0]);
-		char temp_buffer[EMAIL_BODY_LENGTH - 1];
-		snprintf(temp_buffer, EMAIL_BODY_LENGTH - 1, "%s failed\r\n",
-			 args[0]);
-		strncat(email_body, temp_buffer, EMAIL_BODY_LENGTH - 1);
+		pr_error_fd("`%s` failed\n", args[0]);
 	}
 
 	return ret;
@@ -192,9 +161,9 @@ int replicate(struct db_t *pg_db_t)
 	int ret = 0;
 	char *pg_pass = NULL;
 	char *pg_command_path = NULL;
-	char backup_path[255] = { 0 };
+	char backup_path[256] = { 0 };
 	char *pg_bin, prefixed_command_path[261] = "PATH=";
-	char command_path[255] = "/usr/bin/";
+	char command_path[256] = "/usr/bin/";
 	int command_path_size = strlen(command_path) + 1;
 
 	construct_dump_path(backup_path);
@@ -239,7 +208,7 @@ int replicate(struct db_t *pg_db_t)
 		pr_debug("$PG_BIN=%s was found.\n", pg_bin);
 		command_path_size = strlen(pg_bin) + 1;
 	} else {
-		pr_warn("PG_BIN was not found.\n");
+		pr_warn_fd("PG_BIN was not found.\n");
 	}
 	strncat(prefixed_command_path, command_path, command_path_size + 1);
 
@@ -250,8 +219,6 @@ int replicate(struct db_t *pg_db_t)
 			   prefixed_command_path);
 	if (ret != 0)
 		goto cleanup;
-	strcat(email_body, "\r\n");
-	email_body_size += strlen("\r\n");
 
 	setup_command(&pg_command_path, &pg_pass, PG_RESTORE_COMMAND,
 		      pg_db_t->pg_conf->password.target, command_path,
@@ -261,15 +228,8 @@ int replicate(struct db_t *pg_db_t)
 	if (ret != 0)
 		goto cleanup;
 
-	pr_info("Database Replication was successful!\n");
-	char temp_buffer[EMAIL_BODY_LENGTH - 1];
-	email_body_size += snprintf(
-		temp_buffer, EMAIL_BODY_LENGTH - 1,
-		"\r\nReplication of Postgres Database: `%s` was successful.\r\n",
-		pg_db_t->pg_conf->database.origin);
-	strncat(email_body, temp_buffer, EMAIL_BODY_LENGTH - 1);
-	// Realloc according to the `email_body_size` so we have accurate size
-	email_body = realloc(email_body, email_body_size * sizeof(char) + 1);
+	pr_info_fd("\nReplication of Postgres Database: `%s` was successful.\n",
+		   pg_db_t->pg_conf->database.origin);
 cleanup:
 	free(pg_command_path);
 	free(pg_pass);
@@ -281,7 +241,7 @@ void construct_dump_path(char *path)
 	char *home_path = getenv("HOME");
 	int home_path_size = strlen(home_path) + 1;
 	snprintf(path, home_path_size, "%s", home_path);
-	strcat(path, "/backup.dump");
+	strcat(path, PG_DUMP_FILE);
 }
 
 ADD_FUNC(construct_pg);

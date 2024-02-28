@@ -21,8 +21,11 @@ int execute_db_operations(void)
 
 	section_foreach_entry(my_array, init_db_func_ptr_t, entry)
 	{
-		if (entry->func() == -ENOMEM) {
-			pr_error("Error allocating memory\n");
+		int ret = entry->func();
+		if (ret == -ENOMEM) {
+			pr_error_fd("Error allocating memory\n");
+			free(available_dbs);
+			return ret;
 		}
 	}
 

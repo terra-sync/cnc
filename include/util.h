@@ -2,11 +2,14 @@
 #define UTIL_H
 
 #include <errno.h>
+#include <stdio.h>
 
 /* Write/Read end for pipes */
 #define READ_END 0
 #define WRITE_END 1
-#define EMAIL_BODY_LENGTH 4096
+
+/* The log filename is of the format `cncDDMMYY_HHMMSS.log */
+#define LOG_FILE_SIZE_NAME 21;
 
 #define CNC_MALLOC(SIZE)                  \
 	({                                \
@@ -24,7 +27,7 @@
  *  0 on success
  * -1 on failure reading from pipe
  */
-int read_buffer_pipe(int *, char *, int *);
+int read_buffer_pipe(int *);
 
 /*
  * execve_binary
@@ -37,13 +40,13 @@ int read_buffer_pipe(int *, char *, int *);
  *  -2 Failure of creation of fork() or pipe()
  *
  */
-int execve_binary(char *, char *const[], char *const[], char *, int *);
+int execve_binary(char *, char *const[], char *const[]);
 
 /*
  * This function is used to append a `\r` character before each `\n`, and it is needed
  * because some email providers don't support receiving emails with "bare" new-line characters.
  */
-void format_buffer(char *, int *);
+void format_buffer(char *);
 
 /*
  * Create the parent directories needed for a given path iteratively.
