@@ -10,6 +10,7 @@
 #define PG_PASS_PREFIX 11
 #define PG_DUMP_COMMAND "pg_dump"
 #define PG_RESTORE_COMMAND "pg_restore"
+#define PG_DUMP_FILE "/backup.dump"
 
 void construct_dump_path(char *);
 
@@ -18,6 +19,7 @@ void construct_dump_path(char *);
  *
  *  Returns:
  *  0 on success
+ * -1 error opening file
  * -ENOMEM Error allocating memory
  *
  */
