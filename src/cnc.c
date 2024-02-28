@@ -74,6 +74,8 @@ int process_args(int argc, char **argv)
 			pr_error("Config: Error opening `.ini` file\n");
 		} else if (ret == -2) {
 			pr_error("Config: Error allocating memory\n");
+		} else if (ret == -3) {
+			pr_error("Config: Error opening the log file\n");
 		}
 
 		free((void *)config_file);

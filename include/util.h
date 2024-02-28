@@ -45,4 +45,21 @@ int execve_binary(char *, char *const[], char *const[], char *, int *);
  */
 void format_buffer(char *, int *);
 
+/*
+ * Create the parent directories needed for a given path iteratively.
+ */
+int mkdir_p(char *path);
+
+/*
+ * cnc_strdup()
+ * Calls `strdup` with `string_to_dup` as argument, and checks the result.
+ * If success, the result is saved on `string`.
+ *
+ * Returns:
+ *  0 Success
+ * -ENOMEM of failure of `strdup` call
+ *
+ */
+int cnc_strdup(char **string, char *string_to_dup);
+
 #endif

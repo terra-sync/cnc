@@ -48,11 +48,26 @@ typedef struct smtp_t {
 	bool enabled;
 } smtp_t;
 
+typedef struct general_t {
+	const char *log_filepath;
+} general_t;
+
 typedef struct config_t {
 	postgres_t *postgres_config;
 	smtp_t *smtp_config;
+	general_t *general_config;
 } config_t;
 
+/* 
+ * initialize_config
+ *
+ *   0 Success
+ *  -1 Error opening File
+ *  -2 Error allocating memory (`inih` library)
+ *  -3 Error creating directory
+ *  -ENOMEM Error allocating memory (CNC_MALLOC macro)
+ *  >0 Number of line with parsing error
+ */
 int initialize_config(const char *config_file);
 void free_config(void);
 int handler(void *user, const char *section, const char *name,

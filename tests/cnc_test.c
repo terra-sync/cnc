@@ -3,12 +3,14 @@
 #include "cnc.h"
 #include "config.h"
 #include "util.h"
+#include "log.h"
 
 #include <stdlib.h>
 #include <ini.h>
 #include <stdint.h>
 
 extern config_t *ini_config;
+extern char *log_filepath;
 
 int init_suite(void)
 {
@@ -103,6 +105,33 @@ void test_malloc_macro_failure(void)
 	CU_ASSERT_EQUAL(result, -ENOMEM);
 }
 
+void test_parse_log_filepath(void)
+{
+	int result;
+	ini_config = (config_t *)malloc(sizeof(config_t));
+	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
+	ini_config->general_config = (general_t *)malloc(sizeof(general_t));
+	result = ini_parse_string("[general]\nlog_filepath=/var/log/cnc/",
+				  handler, ini_config);
+	CU_ASSERT_EQUAL(result, 0);
+}
+
+void test_construct_log_filepath_wrong_path(void)
+{
+	int result;
+	char *log_filepath = NULL;
+	ini_config = (config_t *)malloc(sizeof(config_t));
+	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
+	ini_config->general_config = (general_t *)malloc(sizeof(general_t));
+	ini_parse_string("[general]\nlog_filepath=var/log/cnc/", handler,
+			 ini_config);
+	result = construct_log_filepath(
+		ini_config->general_config->log_filepath, &log_filepath);
+	CU_ASSERT_EQUAL(result, -3);
+}
+
 typedef struct CU_test_info {
 	const char *test_name;
 	void (*test_func)(void);
@@ -118,6 +147,9 @@ CU_test_info test_cases[] = {
 	{ "test_empty_backup_type", test_empty_backup_type },
 	{ "test_malloc_macro_sucess", test_malloc_macro_success },
 	{ "test_malloc_macro_failure", test_malloc_macro_failure },
+	{ "test_parse_log_filepath", test_parse_log_filepath },
+	{ "test_construct_log_filepath_wrong_path",
+	  test_construct_log_filepath_wrong_path },
 	{ NULL, NULL } // Array must be NULL terminated
 };
 
