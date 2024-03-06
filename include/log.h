@@ -39,9 +39,8 @@ extern FILE *log_file;
 		fprintf(log_file, "VERBOSE:%s\t", __func__); \
 		fprintf(log_file, __VA_ARGS__);              \
 	}
-#define pr_info_fd(...)               \
-	pr_info(__VA_ARGS__);         \
-	fprintf(stdout, __VA_ARGS__); \
+#define pr_info_fd(...)       \
+	pr_info(__VA_ARGS__); \
 	fprintf(log_file, __VA_ARGS__);
 #define pr_error_fd(...)                                          \
 	pr_error(__VA_ARGS__);                                    \
