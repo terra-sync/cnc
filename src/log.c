@@ -49,7 +49,7 @@ int construct_log_filepath(const char *config_filepath, char **log_filepath)
 			if (getcwd(current_directory,
 				   sizeof(current_directory)) != NULL) {
 				strncat(current_directory, "/",
-					sizeof(current_directory));
+					sizeof(current_directory) - 1);
 
 				ret = cnc_strdup(log_filepath,
 						 current_directory);
