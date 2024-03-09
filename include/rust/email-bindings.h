@@ -13,7 +13,7 @@ typedef struct EmailInfo {
 	uintptr_t to_len;
 	const char *const *cc;
 	uintptr_t cc_len;
-	const char *body;
+	const char *filepath;
 	const char *smtp_host;
 	const char *smtp_username;
 	const char *smtp_password;
@@ -58,7 +58,7 @@ typedef struct EmailInfo {
  *             .to_len = to_len,
  *             .cc = cc,
  *             .cc_len = cc_len,
- *             .body = body,
+ *             .filepath = filepath,
  *             .smtp_host = smtp_host,
  *             .smtp_username = smtp_username,
  *             .smtp_password = smtp_password,
