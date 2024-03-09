@@ -3,10 +3,11 @@ use lettre::{
 	transport::smtp::authentication::Credentials, Message,
 	SmtpTransport, Transport,
 };
-use std::{ffi::CStr, os::raw::c_char, slice};
+use std::{ffi::CStr, fs, io, os::raw::c_char, slice};
 
 /// Represents the necessary information to send an email.
-/// Struct is designed to be compatible with C, allowing for easy FFI.
+/// Struct is designed to be compatible with C, allowing for easy
+/// FFI.
 #[repr(C)]
 pub struct EmailInfo {
 	from: *const c_char,
@@ -14,7 +15,7 @@ pub struct EmailInfo {
 	to_len: usize,
 	cc: *const *const c_char,
 	cc_len: usize,
-	body: *const c_char,
+	filepath: *const c_char,
 
 	smtp_host: *const c_char,
 	smtp_username: *const c_char,
@@ -22,11 +23,13 @@ pub struct EmailInfo {
 }
 
 /// Converts a C-style string to a Rust `String`.
-/// Returns `Ok(String)` if conversion is successful, `Err(i32)` if the input string is null.
+/// Returns `Ok(String)` if conversion is successful, `Err(i32)`
+/// if the input string is null.
 ///
 /// # Arguments
 ///
-/// * `str_` - A pointer to the null-terminated C-style string to convert.
+/// * `str_` - A pointer to the null-terminated C-style string to
+///   convert.
 fn c_char_to_string(str_: *const c_char) -> Result<String, i32> {
 	unsafe {
 		if str_.is_null() {
@@ -36,20 +39,33 @@ fn c_char_to_string(str_: *const c_char) -> Result<String, i32> {
 	}
 }
 
-/// Sends an email based on the provided `EmailInfo`.
-/// Initializes logging, constructs the email message, and sends it using SMTP.
+/// Reads the email body from a file, located in `filepath`.
 ///
 /// # Arguments
 ///
-/// * `email_info` - Struct containing information about the email to be sent.
+/// * `filepath` - A String containing the filepath of the file
+///   we want to read.
+fn read_mail_body(filepath: &str) -> Result<String, io::Error> {
+	fs::read_to_string(filepath)
+}
+
+/// Sends an email based on the provided `EmailInfo`.
+/// Initializes logging, constructs the email message, and sends
+/// it using SMTP.
+///
+/// # Arguments
+///
+/// * `email_info` - Struct containing information about the
+///   email to be sent.
 ///
 /// # Returns
 ///
 /// Returns `0` on success, `-1` on failure.
 /// # Example Usage in C
 ///
-/// This example demonstrates how to construct and pass an `EmailInfo` struct from C,
-/// calling the `send_email` function exposed by Rust.
+/// This example demonstrates how to construct and pass an
+/// `EmailInfo` struct from C, calling the `send_email` function
+/// exposed by Rust.
 ///
 /// ```c
 /// #include <stdio.h>
@@ -74,7 +90,7 @@ fn c_char_to_string(str_: *const c_char) -> Result<String, i32> {
 ///             .to_len = to_len,
 ///             .cc = cc,
 ///             .cc_len = cc_len,
-///             .body = body,
+///             .filepath = filepath,
 ///             .smtp_host = smtp_host,
 ///             .smtp_username = smtp_username,
 ///             .smtp_password = smtp_password,
@@ -86,7 +102,15 @@ fn c_char_to_string(str_: *const c_char) -> Result<String, i32> {
 #[no_mangle]
 pub extern "C" fn send_email(email_info: EmailInfo) -> i32 {
 	let from_str = c_char_to_string(email_info.from).unwrap();
-	let body_str = c_char_to_string(email_info.body).unwrap();
+	let filepath_str =
+		c_char_to_string(email_info.filepath).unwrap();
+	let body = match read_mail_body(&filepath_str) {
+		Ok(body) => body,
+		Err(error) => {
+			println!("{:?}", error);
+			return -2;
+		},
+	};
 
 	let to_strs: Vec<String> = unsafe {
 		if email_info.to.is_null() {
@@ -137,7 +161,7 @@ pub extern "C" fn send_email(email_info: EmailInfo) -> i32 {
 		}
 	};
 
-	let email = email_builder.body(body_str).unwrap();
+	let email = email_builder.body(body).unwrap();
 
 	let creds = Credentials::new(
 		c_char_to_string(email_info.smtp_username).unwrap(),
