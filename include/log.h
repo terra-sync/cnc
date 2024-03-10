@@ -54,7 +54,7 @@ extern FILE *log_file;
 	fprintf(log_file, ANSI_COLOR_RESET);
 
 bool get_verbose(void);
-void construct_log_filename(char **, const char *);
+void construct_log_filename(char **, char *);
 
 /*
  *  construct_log_filepath()

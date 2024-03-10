@@ -108,6 +108,31 @@ void close_pg(struct db_t *pg_db_t)
 {
 	PQfinish(pg_db_t->origin_conn);
 	PQfinish(pg_db_t->target_conn);
+
+	if (ini_config->smtp_config->enabled && pg_db_t->pg_conf->email) {
+		EmailInfo email_info = {
+			.from = ini_config->smtp_config->from,
+			.to = (const char *const *)ini_config->smtp_config->to,
+			.to_len = ini_config->smtp_config->to_len,
+			.cc = (const char *const *)ini_config->smtp_config->cc,
+			.cc_len = ini_config->smtp_config->cc_len,
+			.filepath = ini_config->general_config->log_filepath,
+			.smtp_host = ini_config->smtp_config->smtp_host,
+			.smtp_username = ini_config->smtp_config->username,
+			.smtp_password = ini_config->smtp_config->password,
+		};
+		// set the file position indicator to start, so we can send the email
+		fseek(log_file, 0, SEEK_SET);
+		int result = send_email(email_info);
+		if (result < 0) {
+			pr_error("Unable to send email.\n");
+		} else {
+			pr_info("Email was successfully sent!\n");
+			// set the file position at the end, to continue appending for other database systems
+			fseek(log_file, 0, SEEK_END);
+		}
+	}
+
 	free(pg_db_t->pg_conf);
 	free(pg_db_t);
 }
