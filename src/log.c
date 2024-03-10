@@ -6,13 +6,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "util.h"
+#include "config.h"
 
 bool verbose;
 FILE *log_file;
+extern config_t *ini_config;
 
-void construct_log_filename(char **log_filename, const char *log_filepath)
+void construct_log_filename(char **log_filename, char *log_filepath)
 {
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
@@ -20,6 +23,7 @@ void construct_log_filename(char **log_filename, const char *log_filepath)
 	sprintf(*log_filename, "%scnc%02d%02d%02d_%02d%02d%02d.log",
 		log_filepath, tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900,
 		tm.tm_hour, tm.tm_min, tm.tm_sec);
+	ini_config->general_config->log_filepath = strdup(*log_filename);
 }
 
 int construct_log_filepath(const char *config_filepath, char **log_filepath)
