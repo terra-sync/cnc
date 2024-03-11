@@ -1,6 +1,12 @@
 #include <string.h>
 #include <unistd.h>
+
+#if defined(__APPLE__) && defined(__MACH__)
+#include <mach/error.h>
+#else
 #include <error.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/types.h>
 

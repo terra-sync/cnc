@@ -4,7 +4,10 @@
 
 #include <stddef.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <sys/errno.h>
+
+init_db_func init_functions[MAX_AVAILABLE_DBS];
+int num_init_functions = 0;
 
 /* We need to hold info of how many
  * available databases implementations
@@ -19,9 +22,10 @@ int execute_db_operations(void)
 	available_dbs = (struct db_operations **)calloc(
 		MAX_AVAILABLE_DBS, sizeof(struct db_operations **));
 
-	section_foreach_entry(my_array, init_db_func_ptr_t, entry)
+	init_db_func init_function;
+	section_foreach_entry(init_function)
 	{
-		int ret = entry->func();
+		int ret = init_function();
 		if (ret == -ENOMEM) {
 			pr_error_fd("Error allocating memory\n");
 			free(available_dbs);

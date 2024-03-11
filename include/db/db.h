@@ -5,29 +5,24 @@
 #include <stdbool.h>
 
 #define MAX_AVAILABLE_DBS 10
-
 typedef int (*init_db_func)(void);
 
-typedef struct init_db_func_ptr_s {
-	init_db_func func;
-} init_db_func_ptr_t;
+extern init_db_func init_functions[MAX_AVAILABLE_DBS];
+extern int num_init_functions;
 
-#define ADD_FUNC(init_func)                                  \
-	static init_db_func_ptr_t ptr_##init_func            \
-		__attribute((used, section("my_array"))) = { \
-			.func = init_func,                   \
-		}
+#define ADD_FUNC(init_func)                                               \
+	void __attribute__((constructor)) init_func##_register(void)      \
+	{                                                                 \
+		if (num_init_functions < MAX_AVAILABLE_DBS) {             \
+			init_functions[num_init_functions++] = init_func; \
+		}                                                         \
+	}
 
-#define section_foreach_entry(section_name, type_t, elem)  \
-	for (type_t *elem = ({                             \
-		     extern type_t __start_##section_name; \
-		     &__start_##section_name;              \
-	     });                                           \
-	     elem != ({                                    \
-		     extern type_t __stop_##section_name;  \
-		     &__stop_##section_name;               \
-	     });                                           \
-	     ++elem)
+// Macro to iterate over all registered functions
+#define section_foreach_entry(elem)                                \
+	for (int _index = 0; _index < num_init_functions &&        \
+			     ((elem = init_functions[_index]), 1); \
+	     ++_index)
 
 /* struct db_t
  * Holds the information every database will need.
