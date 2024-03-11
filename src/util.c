@@ -173,7 +173,6 @@ int cnc_strdup(char **string, char *string_to_dup)
 		*string = temp_string;
 	} else {
 		pr_error("strdup: Failed to allocate memory.\n");
-		free(temp_string);
 		return -ENOMEM;
 	}
 
