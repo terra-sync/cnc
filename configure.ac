@@ -10,6 +10,8 @@ AS_IF([test "x$CARGO" = "xno"], [AC_MSG_ERROR([Cargo is required to build Rust l
 # Detect macOS and adjust CFLAGS and LDFLAGS for Homebrew
 AS_CASE([$host_os],
   [darwin*], [
+    AC_DEFINE([MACOS], [1], [Define on macOS])
+    AM_CONDITIONAL([MACOS], [true])
     # Attempt to determine the Homebrew prefix
     BREW_PREFIX=$(brew --prefix 2>/dev/null || echo "/usr/local")
     if test -d "$BREW_PREFIX/include"; then
@@ -21,6 +23,7 @@ AS_CASE([$host_os],
   ],
   [*], [
     # Default case (for non-darwin platforms) can be left empty or used for other platform-specific settings
+    AM_CONDITIONAL([MACOS], [false])
   ]
 )
 

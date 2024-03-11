@@ -1,10 +1,14 @@
 bin_PROGRAMS = cnc
-cnc_SOURCES = src/cnc.c src/config.c src/db.c src/log.c src/main.c src/postgres.c src/util.c
+cnc_SOURCES = src/postgres.c src/cnc.c src/config.c src/db.c src/log.c src/main.c src/util.c
 cnc_LDADD = -linih -lpq $(RUST_LIBS)
 cnc_CFLAGS = -Iinclude -I/usr/include/postgresql/ -Wall -g
 
 # Define Rust libraries and their paths
+if MACOS
+RUST_LIBS = rust/email/target/debug/libemail.dylib
+else
 RUST_LIBS = rust/email/target/debug/libemail.so
+endif
 
 # Use BUILT_SOURCES to ensure rust_libs is considered a prerequisite
 BUILT_SOURCES = $(RUST_LIBS)
