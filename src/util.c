@@ -166,7 +166,7 @@ int mkdir_p(char *path)
 	return 0;
 }
 
-int cnc_strdup(char **string, char *string_to_dup)
+inline int cnc_strdup(char **string, char *string_to_dup)
 {
 	char *temp_string = strdup(string_to_dup);
 	if (temp_string != NULL) {
