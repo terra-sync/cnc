@@ -29,13 +29,6 @@ typedef struct init_db_func_ptr_s {
 	     });                                           \
 	     ++elem)
 
-/* TODO: Later on when we are going to support */
-/* target alongside origin database. */
-/* struct d_str_t { */
-/*	const char *origin; */
-/*	const char *target; */
-/* }; */
-
 /* struct db_t
  * Holds the information every database will need.
  *
