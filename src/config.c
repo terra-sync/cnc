@@ -13,16 +13,6 @@ extern FILE *log_file;
 #define CHECK_SECTION(s) strcmp(section, s) == 0
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
 
-void remove_spaces(char *s)
-{
-	char *d = s;
-	do {
-		while (*d == ' ') {
-			++d;
-		}
-	} while ((*s++ = *d++));
-}
-
 void config_split_array_string(char *dest_array[], const char *value, int *len)
 {
 	int idx = 0;
