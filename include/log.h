@@ -10,7 +10,13 @@
 #define LOG_FILEPATH "/var/log/"
 #define LOG_DIRECTORY "/var/log/cnc/"
 
+extern bool verbose;
 extern FILE *log_file;
+
+static inline bool get_verbose(void)
+{
+	return verbose;
+}
 
 /* Only if `verbose` is enabled (throught "-v" flag)
  * this print is going to print to STDOUT. Name
@@ -53,7 +59,6 @@ extern FILE *log_file;
 	fprintf(log_file, __VA_ARGS__);                                \
 	fprintf(log_file, ANSI_COLOR_RESET);
 
-bool get_verbose(void);
 void construct_log_filename(char **, char *);
 
 /*

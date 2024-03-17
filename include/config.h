@@ -75,6 +75,15 @@ int handler(void *user, const char *section, const char *name,
 
 /* Utilities */
 void config_split_array_string(char *dest_array[], const char *value, int *len);
-void remove_spaces(char *s);
+
+inline static void remove_spaces(char *s)
+{
+	char *d = s;
+	do {
+		while (*d == ' ') {
+			++d;
+		}
+	} while ((*s++ = *d++));
+}
 
 #endif

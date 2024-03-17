@@ -4,6 +4,8 @@
 #include <errno.h>
 #include <stdio.h>
 
+#include "log.h"
+
 /* Write/Read end for pipes */
 #define READ_END 0
 #define WRITE_END 1
@@ -63,6 +65,17 @@ int mkdir_p(char *path);
  * -ENOMEM of failure of `strdup` call
  *
  */
-int cnc_strdup(char **string, char *string_to_dup);
+static inline int cnc_strdup(char **string, char *string_to_dup)
+{
+	char *temp_string = strdup(string_to_dup);
+	if (temp_string != NULL) {
+		*string = temp_string;
+	} else {
+		pr_error("strdup: Failed to allocate memory.\n");
+		return -ENOMEM;
+	}
+
+	return 0;
+}
 
 #endif

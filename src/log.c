@@ -11,7 +11,8 @@
 #include "util.h"
 #include "config.h"
 
-bool verbose;
+bool verbose = false;
+
 FILE *log_file;
 extern config_t *ini_config;
 
@@ -83,9 +84,4 @@ int construct_log_filepath(const char *config_filepath, char **log_filepath)
 	}
 
 	return 0;
-}
-
-bool get_verbose(void)
-{
-	return verbose;
 }
