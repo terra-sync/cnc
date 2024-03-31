@@ -18,6 +18,7 @@ static struct option options[] = {
 	{ "config-file", required_argument, NULL, 'f' },
 	{ "verbose", no_argument, NULL, 'v' },
 	{ "help", no_argument, NULL, 'h' },
+	{ "version", no_argument, NULL, 'V' },
 	{ 0, 0, 0, 0 } // End of options
 };
 
@@ -28,6 +29,7 @@ void help(void)
 	pr_info("  -f, --config-file <file>  Specify the config file to use\n");
 	pr_info("  -v, --verbose             Run in verbose mode\n");
 	pr_info("  -h, --help                Print this help message\n");
+	pr_info(" -V, --version Print the version information\n");
 }
 
 int process_args(int argc, char **argv)
@@ -42,7 +44,7 @@ int process_args(int argc, char **argv)
 	char *config_file = NULL;
 
 	optind = 0;
-	while ((c = getopt_long(argc, argv, "f:vh", options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "f:vhV", options, NULL)) != -1) {
 		switch (c) {
 		case 'f':
 			config_file = strdup(optarg);
@@ -51,8 +53,12 @@ int process_args(int argc, char **argv)
 		case 'v':
 			verbose = true;
 			break;
-		case 'h':
 		case '?':
+		case 'V':
+			pr_info("Version: %s\n", VERSION);
+			pr_info("Commit: %s\n", COMMIT_HASH);
+			return 0;
+		case 'h':
 		default:
 			help();
 			return 0;

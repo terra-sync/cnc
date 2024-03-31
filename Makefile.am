@@ -1,7 +1,7 @@
 bin_PROGRAMS = cnc
 cnc_SOURCES = src/postgres.c src/cnc.c src/config.c src/db.c src/log.c src/main.c src/util.c
 cnc_LDADD = -linih -lpq $(RUST_LIBS)
-cnc_CFLAGS = -Iinclude -I/usr/include/postgresql/ -Wall -g
+cnc_CFLAGS = -Iinclude -I/usr/include/postgresql/ -Wall -g -DCOMMIT_HASH=\"@COMMIT_HASH@\"
 
 # Define Rust libraries and their paths
 if MACOS

@@ -5,7 +5,8 @@
 
 /**
  * Represents the necessary information to send an email.
- * Struct is designed to be compatible with C, allowing for easy FFI.
+ * Struct is designed to be compatible with C, allowing for easy
+ * FFI.
  */
 typedef struct EmailInfo {
 	const char *from;
@@ -21,19 +22,22 @@ typedef struct EmailInfo {
 
 /**
  * Sends an email based on the provided `EmailInfo`.
- * Initializes logging, constructs the email message, and sends it using SMTP.
+ * Initializes logging, constructs the email message, and sends
+ * it using SMTP.
  *
  * # Arguments
  *
- * * `email_info` - Struct containing information about the email to be sent.
+ * * `email_info` - Struct containing information about the
+ *   email to be sent.
  *
  * # Returns
  *
  * Returns `0` on success, `-1` on failure.
  * # Example Usage in C
  *
- * This example demonstrates how to construct and pass an `EmailInfo` struct from C,
- * calling the `send_email` function exposed by Rust.
+ * This example demonstrates how to construct and pass an
+ * `EmailInfo` struct from C, calling the `send_email` function
+ * exposed by Rust.
  *
  * ```c
  * #include <stdio.h>
