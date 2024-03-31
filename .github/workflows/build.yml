@@ -32,6 +32,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
+          sudo apt update
           sudo apt install libinih-dev
           sudo apt install libcurl4-openssl-dev
           sudo apt install valgrind

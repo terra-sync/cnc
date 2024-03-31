@@ -1,5 +1,6 @@
-AC_INIT([cnc], [1.0], [charmitor@posteo.net])
+AC_INIT([cnc], [m4_esyscmd_s([git describe --tags --always | tr -d '\n'])], [charmitor@posteo.net])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
+
 AC_PROG_CC
 AC_CANONICAL_HOST
 
@@ -39,12 +40,12 @@ AS_CASE([$host_os],
 # Checks for libraries and headers
 # Check for inih
 AC_CHECK_LIB([inih], [ini_parse], [], [
-    AC_MSG_ERROR([*** The inih library is required but missing. ***])
+  AC_MSG_ERROR([*** The inih library is required but missing. ***])
 ])
 
 # Check for PostgreSQL
 AC_CHECK_LIB([pq], [PQconnectdb], [], [
-    AC_MSG_ERROR([*** libpq is required but missing. ***])
+  AC_MSG_ERROR([*** libpq is required but missing. ***])
 ])
 
 # Checks for header files
@@ -53,8 +54,10 @@ AC_CHECK_HEADERS([postgresql/libpq-fe.h])
 # Adjusting CFLAGS and LDFLAGS
 CFLAGS="$CFLAGS -Iinclude -I/usr/include/postgresql/ -Wall -g"
 LDFLAGS="$LDFLAGS -linih -lpq"
+
+AC_SUBST([COMMIT_HASH], [$(git rev-parse HEAD)])
+
 AC_SUBST([CFLAGS])
 AC_SUBST([LDFLAGS])
-
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
