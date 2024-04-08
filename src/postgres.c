@@ -192,9 +192,9 @@ int replicate(struct db_t *pg_db_t)
 	int ret = 0;
 	char *pg_pass = NULL;
 	char *pg_command_path = NULL;
-	char backup_path[256] = { 0 };
-	char *pg_bin, prefixed_command_path[261] = "PATH=";
-	char command_path[256] = "/usr/bin/";
+	char backup_path[PATH_MAX + 1] = { 0 };
+	char *pg_bin, prefixed_command_path[PATH_MAX + 6] = "PATH=";
+	char command_path[PATH_MAX + 1] = "/usr/bin/";
 	int command_path_size = strlen(command_path) + 1;
 
 	construct_dump_path(backup_path);
@@ -241,6 +241,7 @@ int replicate(struct db_t *pg_db_t)
 	} else {
 		pr_warn_fd("PG_BIN was not found.\n");
 	}
+
 	strncat(prefixed_command_path, command_path, command_path_size + 1);
 
 	setup_command(&pg_command_path, &pg_pass, PG_DUMP_COMMAND,

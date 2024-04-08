@@ -50,7 +50,7 @@ int construct_log_filepath(const char *config_filepath, char **log_filepath)
 			pr_warn("No permissions to create directory on `/var/log/`. "
 				"Current directory will be used.\n");
 
-			char current_directory[256];
+			char current_directory[PATH_MAX + 1];
 			if (getcwd(current_directory,
 				   sizeof(current_directory)) != NULL) {
 				strncat(current_directory, "/",
@@ -65,7 +65,7 @@ int construct_log_filepath(const char *config_filepath, char **log_filepath)
 		}
 	} else {
 		// else we iterate through the path and create each parent directory needed
-		char path[256];
+		char path[PATH_MAX + 1];
 		snprintf(path, sizeof(path), "%s", config_filepath);
 		if (*path != '/') {
 			pr_error(
