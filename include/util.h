@@ -84,4 +84,10 @@ static inline int cnc_strdup(char **string, char *string_to_dup)
 	return 0;
 }
 
+/*
+ * Append a filename to a given path. This function uses
+ * PATH_MAX or 4096 as the max characters to be appended.
+ */
+void construct_filepath(char *path, char *filename);
+
 #endif
