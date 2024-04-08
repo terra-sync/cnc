@@ -163,7 +163,7 @@ int initialize_config(const char *config_file)
 {
 	int ret = 0;
 	char *log_filepath = NULL;
-	char *log_filename = malloc(sizeof(char) * 256);
+	char *log_filename = malloc(sizeof(char) * (PATH_MAX + 1));
 
 	ini_config = CNC_MALLOC(sizeof(config_t));
 	ini_config->postgres_config = CNC_MALLOC(sizeof(postgres_t));
