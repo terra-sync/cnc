@@ -12,8 +12,6 @@
 #define PG_RESTORE_COMMAND "pg_restore"
 #define PG_DUMP_FILE "/backup.dump"
 
-void construct_dump_path(char *);
-
 /*
  *  construct_pg
  *

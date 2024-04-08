@@ -165,3 +165,10 @@ int mkdir_p(char *path)
 
 	return 0;
 }
+
+void construct_filepath(char *path, char *filename)
+{
+	char *home_path = getenv("HOME");
+	snprintf(path, PATH_MAX - 1, "%s", home_path);
+	strncat(path, filename, PATH_MAX - strlen(path) - 1);
+}

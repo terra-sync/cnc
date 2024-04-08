@@ -37,9 +37,6 @@ int construct_pg(void)
 	memcpy(pg_db_t->pg_conf, ini_config->postgres_config,
 	       sizeof(postgres_t));
 
-	pr_info_fd("Summary of Postgres Database: `%s`\n\n",
-		   pg_db_t->pg_conf->database.origin);
-
 	pg_db_ops.db = pg_db_t;
 	available_dbs[0] = &pg_db_ops;
 
@@ -69,6 +66,8 @@ int connect_pg(struct db_t *pg_db_t)
 		ret = -2;
 		return ret;
 	}
+	pr_info_fd("Summary of Postgres Database: `%s`\n\n",
+		   pg_db_t->pg_conf->database.origin);
 
 	// Initialize the fields that are to be used to connect to postgres.
 	const char *keywords[] = { "host", "user",   "password",
@@ -197,7 +196,7 @@ int replicate(struct db_t *pg_db_t)
 	char command_path[PATH_MAX + 1] = "/usr/bin/";
 	int command_path_size = strlen(command_path) + 1;
 
-	construct_dump_path(backup_path);
+	construct_filepath(backup_path, PG_DUMP_FILE);
 
 	char *const dump_args[] = {
 		PG_DUMP_COMMAND,
@@ -266,14 +265,6 @@ cleanup:
 	free(pg_command_path);
 	free(pg_pass);
 	return ret;
-}
-
-void construct_dump_path(char *path)
-{
-	char *home_path = getenv("HOME");
-	int home_path_size = strlen(home_path) + 1;
-	snprintf(path, home_path_size, "%s", home_path);
-	strcat(path, PG_DUMP_FILE);
 }
 
 ADD_FUNC(construct_pg);
