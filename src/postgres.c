@@ -264,6 +264,7 @@ int replicate(struct db_t *pg_db_t)
 cleanup:
 	free(pg_command_path);
 	free(pg_pass);
+	remove(backup_path);
 	return ret;
 }
 
