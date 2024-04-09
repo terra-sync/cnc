@@ -23,6 +23,7 @@ extern FILE *log_file;
 extern config_t *ini_config;
 
 extern struct db_operations **available_dbs;
+extern size_t db_ops_counter;
 static struct db_operations pg_db_ops = {
 	.connect = connect_pg,
 	.close = close_pg,
@@ -31,6 +32,12 @@ static struct db_operations pg_db_ops = {
 
 int construct_pg(void)
 {
+	if (!ini_config->postgres_config->enabled) {
+		pr_info_fd("Database: `%s` is disabled, skipping.\n",
+			   ini_config->postgres_config->database.origin);
+		return -1; // not enabled, skip.
+	}
+
 	struct db_t *pg_db_t = CNC_MALLOC(sizeof(struct db_t));
 
 	pg_db_t->pg_conf = CNC_MALLOC(sizeof(postgres_t));
@@ -38,19 +45,11 @@ int construct_pg(void)
 	       sizeof(postgres_t));
 
 	pg_db_ops.db = pg_db_t;
-	available_dbs[0] = &pg_db_ops;
+	available_dbs[db_ops_counter] = &pg_db_ops;
 
 	return 0;
 }
 
-/*
- * connect_pg
- *
- * Returns: 
- *   0 Success
- *  -1 Failure to connect
- *  -2 Not enabled
- */
 int connect_pg(struct db_t *pg_db_t)
 {
 	int ret = 0;
@@ -61,11 +60,6 @@ int connect_pg(struct db_t *pg_db_t)
 	pg_db_t->origin_conn = NULL;
 	pg_db_t->target_conn = NULL;
 
-	// Check if the database is `enabled` before attempting to connect
-	if (!pg_db_t->pg_conf->enabled) {
-		ret = -2;
-		return ret;
-	}
 	pr_info_fd("Summary of Postgres Database: `%s`\n\n",
 		   pg_db_t->pg_conf->database.origin);
 
