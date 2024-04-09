@@ -17,12 +17,18 @@
  *
  *  Returns:
  *  0 on success
- * -1 error opening file
  * -ENOMEM Error allocating memory
  *
  */
 int construct_pg(void);
 
+/*
+ * connect_pg
+ *
+ * Returns:
+ *   0 Success
+ *  -1 Failure to connect
+ */
 int connect_pg(struct db_t *);
 void close_pg(struct db_t *pg_db_t);
 int replicate(struct db_t *pg_db_t);
