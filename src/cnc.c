@@ -42,6 +42,9 @@ int process_args(int argc, char **argv)
 	int c;
 	char *config_file = NULL;
 
+	// This is needed to access the localtime in a thread-safe manner
+	tzset();
+
 	optind = 0;
 	while ((c = getopt_long(argc, argv, "f:vhV", options, NULL)) != -1) {
 		switch (c) {

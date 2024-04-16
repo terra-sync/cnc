@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "log.h"
+#include "db/db.h"
 
 #ifdef _POSIX_C_SOURCE
 #include <limits.h>
@@ -90,4 +91,18 @@ static inline int cnc_strdup(char **string, char *string_to_dup)
  */
 void construct_filepath(char *path, char *filename);
 
+/*
+ * Append `.sql` to a string, mainly to create dump files for SQL-like databases
+ */
+void construct_sql_dump_file(char *backup_filename, const char *database_name);
+
+/*
+ * This function is responsible for iterating through a linked list and for
+ * each node, allocating the correct db structs and populating the `available_dbs` array.
+ */
+int construct_db(void *db_config, bool (*is_enabled)(void *),
+		 void *(*get_next)(void *), const char *(*get_origin)(void *),
+		 int (*connect_func)(struct db_t *),
+		 void (*close_func)(struct db_t *),
+		 int (*replicate_func)(struct db_t *), size_t size_of_node);
 #endif

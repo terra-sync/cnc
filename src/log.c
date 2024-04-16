@@ -20,7 +20,8 @@ extern char *log_filepath;
 void construct_log_filename(char *log_filename, const char *log_name)
 {
 	time_t t = time(NULL);
-	struct tm tm = *localtime(&t);
+	struct tm tm;
+	localtime_r(&t, &tm);
 
 	snprintf(log_filename, PATH_MAX,
 		 "%scnc_%s_%02d%02d%02d%02d%02d%02d.log", log_filepath,

@@ -23,31 +23,29 @@ extern config_t *ini_config;
 extern struct db_operations **available_dbs;
 extern size_t db_ops_counter;
 
-static struct db_operations pg_db_ops = {
-	.connect = connect_pg,
-	.close = close_pg,
-	.replicate = replicate,
-};
+bool pg_is_enabled(void *postgres_node)
+{
+	return ((postgres_node_t *)postgres_node)->enabled;
+}
+
+const char *pg_get_origin(void *postgres_node)
+{
+	return ((postgres_node_t *)postgres_node)->database.origin;
+}
+
+void *pg_get_next(void *postgres_node)
+{
+	return ((postgres_node_t *)postgres_node)->next;
+}
 
 int construct_pg(void)
 {
-	if (!ini_config->postgres_config->enabled) {
-		pr_info("Database: `%s` is disabled, skipping.\n",
-			ini_config->postgres_config->database.origin);
-		return -1; // not enabled, skip.
-	}
+	postgres_node_t *temp_node = ini_config->postgres_config;
+	int ret = construct_db(temp_node, pg_is_enabled, pg_get_next,
+			       pg_get_origin, connect_pg, close_pg, replicate,
+			       sizeof(*ini_config->postgres_config));
 
-	struct db_t *pg_db_t = CNC_MALLOC(sizeof(struct db_t));
-
-	pg_db_t->pg_conf = CNC_MALLOC(sizeof(postgres_t));
-	pg_db_t->log_filename = CNC_MALLOC(sizeof(char) * (PATH_MAX + 1));
-	memcpy(pg_db_t->pg_conf, ini_config->postgres_config,
-	       sizeof(postgres_t));
-
-	pg_db_ops.db = pg_db_t;
-	available_dbs[db_ops_counter] = &pg_db_ops;
-
-	return 0;
+	return ret;
 }
 
 int connect_pg(struct db_t *pg_db_t)
@@ -60,8 +58,10 @@ int connect_pg(struct db_t *pg_db_t)
 	pg_db_t->origin_conn = NULL;
 	pg_db_t->target_conn = NULL;
 
-	construct_log_filename(pg_db_t->log_filename,
-			       pg_db_t->pg_conf->database.origin);
+	construct_log_filename(
+		pg_db_t->log_filename,
+		((postgres_node_t *)pg_db_t->db_conf)->database.origin);
+
 	pg_db_t->log_file = fopen(pg_db_t->log_filename, "a");
 	if (pg_db_t->log_file == NULL) {
 		pr_error("Error opening %s\n", pg_db_t->log_filename);
@@ -69,25 +69,31 @@ int connect_pg(struct db_t *pg_db_t)
 	}
 
 	pr_info_fd(pg_db_t->log_file, "Summary of Postgres Database: `%s`\n\n",
-		   pg_db_t->pg_conf->database.origin);
+		   ((postgres_node_t *)pg_db_t->db_conf)->database.origin);
 
 	// Initialize the fields that are to be used to connect to postgres.
 	const char *keywords[] = { "host", "user",   "password",
 				   "port", "dbname", NULL };
 	// Construct the array that will hold the values of the fields.
-	const char *origin_values[] = { pg_db_t->pg_conf->host.origin,
-					pg_db_t->pg_conf->user.origin,
-					pg_db_t->pg_conf->password.origin,
-					pg_db_t->pg_conf->port.origin,
-					pg_db_t->pg_conf->database.origin };
-	const char *target_values[] = { pg_db_t->pg_conf->host.target,
-					pg_db_t->pg_conf->user.target,
-					pg_db_t->pg_conf->password.target,
-					pg_db_t->pg_conf->port.target,
-					pg_db_t->pg_conf->database.target };
+	const char *origin_values[] = {
+		((postgres_node_t *)pg_db_t->db_conf)->host.origin,
+		((postgres_node_t *)pg_db_t->db_conf)->user.origin,
+		((postgres_node_t *)pg_db_t->db_conf)->password.origin,
+		((postgres_node_t *)pg_db_t->db_conf)->port.origin,
+		((postgres_node_t *)pg_db_t->db_conf)->database.origin
+	};
+	const char *target_values[] = {
+		((postgres_node_t *)pg_db_t->db_conf)->host.target,
+		((postgres_node_t *)pg_db_t->db_conf)->user.target,
+		((postgres_node_t *)pg_db_t->db_conf)->password.target,
+		((postgres_node_t *)pg_db_t->db_conf)->port.target,
+		((postgres_node_t *)pg_db_t->db_conf)->database.target
+	};
 
 	// Connect to origin-database.
+	pthread_mutex_lock(&mutex);
 	pg_db_t->origin_conn = PQconnectdbParams(keywords, origin_values, 0);
+	pthread_mutex_unlock(&mutex);
 	if (PQstatus(pg_db_t->origin_conn) != CONNECTION_OK) {
 		pr_debug_fd(pg_db_t->log_file,
 			    "Postgres origin-database connection: Failed!\n");
@@ -97,10 +103,13 @@ int connect_pg(struct db_t *pg_db_t)
 		ret = -1;
 		return ret;
 	}
+
 	pr_debug("Origin-database connection: Success!\n");
 
 	// Connect to target-database.
+	pthread_mutex_lock(&mutex);
 	pg_db_t->target_conn = PQconnectdbParams(keywords, target_values, 0);
+	pthread_mutex_unlock(&mutex);
 	if (PQstatus(pg_db_t->target_conn) != CONNECTION_OK) {
 		pr_debug_fd(pg_db_t->log_file,
 			    "Target-database connection: Failed!\n");
@@ -120,7 +129,8 @@ void close_pg(struct db_t *pg_db_t)
 	PQfinish(pg_db_t->origin_conn);
 	PQfinish(pg_db_t->target_conn);
 
-	if (ini_config->smtp_config->enabled && pg_db_t->pg_conf->email) {
+	if (ini_config->smtp_config->enabled &&
+	    ((postgres_node_t *)pg_db_t->db_conf)->email) {
 		EmailInfo email_info = {
 			.from = ini_config->smtp_config->from,
 			.to = (const char *const *)ini_config->smtp_config->to,
@@ -144,7 +154,7 @@ void close_pg(struct db_t *pg_db_t)
 
 	fclose(pg_db_t->log_file);
 	free(pg_db_t->log_filename);
-	free(pg_db_t->pg_conf);
+	free(((postgres_node_t *)pg_db_t->db_conf));
 	free(pg_db_t);
 }
 
@@ -198,38 +208,46 @@ int replicate(struct db_t *pg_db_t)
 	char *pg_pass = NULL;
 	char *pg_command_path = NULL;
 	char backup_path[PATH_MAX + 1] = { 0 };
+	char backup_filename[NAME_MAX] = { 0 };
 	char *pg_bin, prefixed_command_path[PATH_MAX + 6] = "PATH=";
 	char command_path[PATH_MAX + 1] = "/usr/bin/";
 	int command_path_size = strlen(command_path) + 1;
 
-	construct_filepath(backup_path, PG_DUMP_FILE);
+	construct_sql_dump_file(
+		backup_filename,
+		((postgres_node_t *)pg_db_t->db_conf)->database.origin);
+	construct_filepath(backup_path, backup_filename);
 
 	char *const dump_args[] = {
 		PG_DUMP_COMMAND,
 		"-U",
-		(char *const)pg_db_t->pg_conf->user.origin,
+		(char *const)((postgres_node_t *)pg_db_t->db_conf)->user.origin,
 		"-h",
-		(char *const)pg_db_t->pg_conf->host.origin,
+		(char *const)((postgres_node_t *)pg_db_t->db_conf)->host.origin,
 		"-p",
-		(char *const)pg_db_t->pg_conf->port.origin,
+		(char *const)((postgres_node_t *)pg_db_t->db_conf)->port.origin,
 		"-l",
-		(char *const)pg_db_t->pg_conf->database.origin,
+		(char *const)((postgres_node_t *)pg_db_t->db_conf)
+			->database.origin,
 		"-f",
 		backup_path,
 		"-v",
-		pg_db_t->pg_conf->backup_type == SCHEMA ? "-s" : NULL,
+		((postgres_node_t *)pg_db_t->db_conf)->backup_type == SCHEMA ?
+			"-s" :
+			NULL,
 		NULL
 	};
 
 	char *const restore_args[] = {
 		PSQL_COMMAND,
 		"-h",
-		(char *const)pg_db_t->pg_conf->host.target,
+		(char *const)((postgres_node_t *)pg_db_t->db_conf)->host.target,
 		"-U",
-		(char *const)pg_db_t->pg_conf->user.target,
+		(char *const)((postgres_node_t *)pg_db_t->db_conf)->user.target,
 		"-p",
-		(char *const)pg_db_t->pg_conf->port.target,
-		(char *const)pg_db_t->pg_conf->database.target,
+		(char *const)((postgres_node_t *)pg_db_t->db_conf)->port.target,
+		(char *const)((postgres_node_t *)pg_db_t->db_conf)
+			->database.target,
 		"-f",
 		backup_path,
 		NULL
@@ -247,16 +265,16 @@ int replicate(struct db_t *pg_db_t)
 	strncat(prefixed_command_path, command_path, command_path_size + 1);
 
 	setup_command(&pg_command_path, &pg_pass, PG_DUMP_COMMAND,
-		      pg_db_t->pg_conf->password.origin, command_path,
-		      command_path_size, strlen(PG_DUMP_COMMAND));
+		      ((postgres_node_t *)pg_db_t->db_conf)->password.origin,
+		      command_path, command_path_size, strlen(PG_DUMP_COMMAND));
 	ret = exec_command(pg_command_path, dump_args, pg_pass,
 			   prefixed_command_path, pg_db_t->log_file);
 	if (ret != 0)
 		goto cleanup;
 
 	setup_command(&pg_command_path, &pg_pass, PSQL_COMMAND,
-		      pg_db_t->pg_conf->password.target, command_path,
-		      command_path_size, strlen(PSQL_COMMAND));
+		      ((postgres_node_t *)pg_db_t->db_conf)->password.target,
+		      command_path, command_path_size, strlen(PSQL_COMMAND));
 	ret = exec_command(pg_command_path, restore_args, pg_pass,
 			   prefixed_command_path, pg_db_t->log_file);
 	if (ret != 0)
@@ -264,7 +282,8 @@ int replicate(struct db_t *pg_db_t)
 
 	pr_info_fd(pg_db_t->log_file,
 		   "\nReplication of Postgres Database: `%s` was successful.\n",
-		   pg_db_t->pg_conf->database.origin);
+		   ((postgres_node_t *)pg_db_t->db_conf)->database.origin);
+
 cleanup:
 	free(pg_command_path);
 	free(pg_pass);

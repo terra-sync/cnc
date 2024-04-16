@@ -9,6 +9,7 @@
 
 config_t *ini_config;
 char *log_filepath;
+bool new_node = false;
 
 #define CHECK_SECTION(s) strcmp(section, s) == 0
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
@@ -47,6 +48,14 @@ int handler(void *user, const char *section, const char *name,
 	}
 
 	if (CHECK_SECTION("postgres")) {
+		// If true, create a new node, and change the head of our linked list.
+		if (new_node) {
+			postgres_node_t *temp_node =
+				CNC_MALLOC(sizeof(postgres_node_t));
+			temp_node->next = ini_config->postgres_config;
+			ini_config->postgres_config = temp_node;
+			new_node = false;
+		}
 		if (MATCH("postgres", "enabled")) {
 			if (strcmp("true", value) == 0) {
 				ini_config->postgres_config->enabled = true;
@@ -108,6 +117,12 @@ int handler(void *user, const char *section, const char *name,
 					"Accepted `enabled` values are \"true\" or \"false\".\n");
 				return 0;
 			}
+			/*
+			 * Since we reached the end of the `postgres` section, we need to change
+			 * the flag so we can create a new node the next time we enter to
+			 * this section.
+			 */
+			new_node = true;
 		} else {
 			return 0;
 		}
@@ -164,7 +179,8 @@ int initialize_config(const char *config_file)
 	int ret = 0;
 
 	ini_config = CNC_MALLOC(sizeof(config_t));
-	ini_config->postgres_config = CNC_MALLOC(sizeof(postgres_t));
+	ini_config->postgres_config = CNC_MALLOC(sizeof(postgres_node_t));
+	ini_config->postgres_config->next = NULL;
 	ini_config->smtp_config = CNC_MALLOC(sizeof(smtp_t));
 	ini_config->general_config = CNC_MALLOC(sizeof(general_t));
 	ini_config->general_config->log_filepath = NULL;
@@ -183,28 +199,38 @@ int initialize_config(const char *config_file)
 	return ret;
 }
 
+/*
+ * A helper function to free each node that we allocated. We iterate through the list
+ * and free all the fields that we have parsed from the `.ini` file.
+ */
+void config_free_linked_list(postgres_node_t *head)
+{
+	postgres_node_t *temp;
+	while (head != NULL) {
+		temp = head;
+		head = head->next;
+		free((void *)temp->host.origin);
+		free((void *)temp->user.origin);
+		free((void *)temp->password.origin);
+		free((void *)temp->port.origin);
+		free((void *)temp->database.origin);
+		free((void *)temp->host.target);
+		free((void *)temp->user.target);
+		free((void *)temp->password.target);
+		free((void *)temp->port.target);
+		free((void *)temp->database.target);
+		free(temp);
+	}
+}
+
 void free_config(void)
 {
-	free((void *)ini_config->postgres_config->host.origin);
-	free((void *)ini_config->postgres_config->user.origin);
-	free((void *)ini_config->postgres_config->password.origin);
-	free((void *)ini_config->postgres_config->port.origin);
-	free((void *)ini_config->postgres_config->database.origin);
-
-	free((void *)ini_config->postgres_config->host.target);
-	free((void *)ini_config->postgres_config->user.target);
-	free((void *)ini_config->postgres_config->password.target);
-	free((void *)ini_config->postgres_config->port.target);
-	free((void *)ini_config->postgres_config->database.target);
+	config_free_linked_list(ini_config->postgres_config);
 
 	free((void *)ini_config->smtp_config->username);
 	free((void *)ini_config->smtp_config->password);
 	free((void *)ini_config->smtp_config->smtp_port);
 	free((void *)ini_config->smtp_config->smtp_host);
-
-	if (ini_config->general_config->log_filepath != NULL) {
-		free((void *)ini_config->general_config->log_filepath);
-	}
 	free((void *)ini_config->smtp_config->from);
 
 	for (int i = 0; i < ini_config->smtp_config->to_len; i++) {
@@ -214,8 +240,9 @@ void free_config(void)
 		free(ini_config->smtp_config->cc[i]);
 	}
 
+	free((void *)ini_config->general_config->log_filepath);
+
 	free(ini_config->smtp_config);
-	free(ini_config->postgres_config);
 	free(ini_config->general_config);
 	free(ini_config);
 	free(log_filepath);

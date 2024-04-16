@@ -2,6 +2,7 @@
 #include "db/postgres.h"
 #include "log.h"
 
+#include <bits/pthreadtypes.h>
 #include <stdlib.h>
 #include <sys/errno.h>
 #include <pthread.h>
@@ -16,6 +17,7 @@ int num_init_functions = 0;
  */
 struct db_operations **available_dbs;
 size_t db_ops_counter = 0;
+pthread_mutex_t mutex;
 
 void *db_operation_thread(void *arg)
 {
@@ -37,26 +39,26 @@ void *db_operation_thread(void *arg)
 int execute_db_operations(void)
 {
 	int ret = 0;
-	pthread_t threads[db_ops_counter];
+	pthread_t threads[MAX_AVAILABLE_DBS];
 	init_db_func init_function;
+
+	if (pthread_mutex_init(&mutex, NULL) != 0) {
+		printf("Mutex initialization failed\n");
+		return 1;
+	}
 
 	available_dbs = (struct db_operations **)calloc(
 		MAX_AVAILABLE_DBS, sizeof(struct db_operations **));
 
 	section_foreach_entry(init_function)
 	{
-		if (db_ops_counter < MAX_AVAILABLE_DBS) {
-			int ret = init_function();
-			if (ret == -ENOMEM) {
-				pr_error("Error allocating memory\n");
-				free(available_dbs);
-				return ret;
-			}
-			db_ops_counter++;
-		} else {
-			pr_info("Max available database number was reached.\n"
-				"Executing replication for %ld database systems.\n",
-				db_ops_counter);
+		int ret = init_function();
+		if (ret == -ENOMEM) {
+			pr_error("Error allocating memory\n");
+			free(available_dbs);
+			pthread_mutex_destroy(&mutex);
+			return ret;
+		} else if (ret == -1) {
 			break;
 		}
 	}
@@ -66,7 +68,10 @@ int execute_db_operations(void)
 					 (void *)available_dbs[i]);
 		if (ret != 0) {
 			pr_error("Error creating thread: %s\n", strerror(ret));
-			return ret;
+			pthread_mutex_destroy(&mutex);
+			free(available_dbs);
+
+			return -2;
 		}
 	}
 
@@ -76,10 +81,16 @@ int execute_db_operations(void)
 			if (ret != 0) {
 				pr_error("Error joining thread: %s\n",
 					 strerror(ret));
+				pthread_mutex_destroy(&mutex);
+				free(available_dbs[i]);
+
 				return ret;
 			}
+			free(available_dbs[i]);
 		}
 	}
+
+	pthread_mutex_destroy(&mutex);
 
 	free(available_dbs);
 	return ret;
