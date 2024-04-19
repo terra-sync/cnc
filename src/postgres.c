@@ -176,7 +176,7 @@ int exec_command(const char *pg_command_path, char *const args[], char *pg_pass,
  *
  * Returns:
  *   0 Success
- *  -1 Failure of`pg_dump` or `pg_restore`
+ *  -1 Failure of`pg_dump` or `psql`
  *  -2 Failure of creation of fork() or pipe()
  *
  */
@@ -194,15 +194,13 @@ int replicate(struct db_t *pg_db_t)
 
 	char *const dump_args[] = {
 		PG_DUMP_COMMAND,
-		"-h",
-		(char *const)pg_db_t->pg_conf->host.origin,
-		"-F",
-		"custom",
-		"-p",
-		(char *const)pg_db_t->pg_conf->port.origin,
 		"-U",
 		(char *const)pg_db_t->pg_conf->user.origin,
-		"-d",
+		"-h",
+		(char *const)pg_db_t->pg_conf->host.origin,
+		"-p",
+		(char *const)pg_db_t->pg_conf->port.origin,
+		"-l",
 		(char *const)pg_db_t->pg_conf->database.origin,
 		"-f",
 		backup_path,
@@ -212,17 +210,16 @@ int replicate(struct db_t *pg_db_t)
 	};
 
 	char *const restore_args[] = {
-		PG_RESTORE_COMMAND,
+		PSQL_COMMAND,
 		"-h",
 		(char *const)pg_db_t->pg_conf->host.target,
-		"-p",
-		(char *const)pg_db_t->pg_conf->port.target,
 		"-U",
 		(char *const)pg_db_t->pg_conf->user.target,
-		"-d",
+		"-p",
+		(char *const)pg_db_t->pg_conf->port.target,
 		(char *const)pg_db_t->pg_conf->database.target,
+		"-f",
 		backup_path,
-		"-v",
 		NULL
 	};
 
@@ -245,9 +242,9 @@ int replicate(struct db_t *pg_db_t)
 	if (ret != 0)
 		goto cleanup;
 
-	setup_command(&pg_command_path, &pg_pass, PG_RESTORE_COMMAND,
+	setup_command(&pg_command_path, &pg_pass, PSQL_COMMAND,
 		      pg_db_t->pg_conf->password.target, command_path,
-		      command_path_size, strlen(PG_RESTORE_COMMAND));
+		      command_path_size, strlen(PSQL_COMMAND));
 	ret = exec_command(pg_command_path, restore_args, pg_pass,
 			   prefixed_command_path);
 	if (ret != 0)
