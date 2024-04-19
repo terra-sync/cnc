@@ -44,7 +44,7 @@ int read_buffer_pipe(int *);
  *
  * Returns:
  *   0 Success
- *  -1 Failure of`pg_dump` or `pg_restore`
+ *  -1 Failure of`pg_dump` or `psql`
  *  -2 Failure of creation of fork() or pipe()
  *
  */
