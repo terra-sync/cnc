@@ -41,3 +41,13 @@ jobs:
           ./autogen.sh
           ./configure
           make
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        uses: actions/checkout@v4
+
+      - name: Build Docker CNC
+        run: docker build -t cnc  .
+

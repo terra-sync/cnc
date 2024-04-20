@@ -15,7 +15,7 @@ BUILT_SOURCES = $(RUST_LIBS)
 
 # Custom rule for building Rust libraries
 $(RUST_LIBS):
-	./scripts/build-rust-libs.sh
+	sh ./scripts/build-rust-libs.sh
 
 .PHONY: rust_libs
 
