@@ -69,7 +69,14 @@ int construct_log_filepath(const char *config_filepath, char **log_filepath)
 	} else {
 		// else we iterate through the path and create each parent directory needed
 		char path[PATH_MAX + 1];
-		snprintf(path, sizeof(path), "%s", config_filepath);
+		int length;
+
+		/* This is to ensure that the user-provided path is correctly terminated with
+		 * the '/' character, which is needed to build the directories
+		 */
+		length = snprintf(path, sizeof(path), "%s", config_filepath);
+		strncat(path, "/", length);
+
 		if (*path != '/') {
 			pr_error(
 				"Please provide an absolute path for log filepath\n");
