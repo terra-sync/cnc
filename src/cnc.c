@@ -12,7 +12,6 @@
 
 extern config_t *ini_config;
 extern bool verbose;
-extern FILE *log_file;
 
 static struct option options[] = {
 	{ "config-file", required_argument, NULL, 'f' },

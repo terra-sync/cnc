@@ -19,11 +19,10 @@
 #include "rust/email-bindings.h"
 #include "util.h"
 
-extern FILE *log_file;
 extern config_t *ini_config;
-
 extern struct db_operations **available_dbs;
 extern size_t db_ops_counter;
+
 static struct db_operations pg_db_ops = {
 	.connect = connect_pg,
 	.close = close_pg,
@@ -33,14 +32,15 @@ static struct db_operations pg_db_ops = {
 int construct_pg(void)
 {
 	if (!ini_config->postgres_config->enabled) {
-		pr_info_fd("Database: `%s` is disabled, skipping.\n",
-			   ini_config->postgres_config->database.origin);
+		pr_info("Database: `%s` is disabled, skipping.\n",
+			ini_config->postgres_config->database.origin);
 		return -1; // not enabled, skip.
 	}
 
 	struct db_t *pg_db_t = CNC_MALLOC(sizeof(struct db_t));
 
 	pg_db_t->pg_conf = CNC_MALLOC(sizeof(postgres_t));
+	pg_db_t->log_filename = CNC_MALLOC(sizeof(char) * (PATH_MAX + 1));
 	memcpy(pg_db_t->pg_conf, ini_config->postgres_config,
 	       sizeof(postgres_t));
 
@@ -60,7 +60,15 @@ int connect_pg(struct db_t *pg_db_t)
 	pg_db_t->origin_conn = NULL;
 	pg_db_t->target_conn = NULL;
 
-	pr_info_fd("Summary of Postgres Database: `%s`\n\n",
+	construct_log_filename(pg_db_t->log_filename,
+			       pg_db_t->pg_conf->database.origin);
+	pg_db_t->log_file = fopen(pg_db_t->log_filename, "a");
+	if (pg_db_t->log_file == NULL) {
+		pr_error("Error opening %s\n", pg_db_t->log_filename);
+		return -2;
+	}
+
+	pr_info_fd(pg_db_t->log_file, "Summary of Postgres Database: `%s`\n\n",
 		   pg_db_t->pg_conf->database.origin);
 
 	// Initialize the fields that are to be used to connect to postgres.
@@ -81,8 +89,10 @@ int connect_pg(struct db_t *pg_db_t)
 	// Connect to origin-database.
 	pg_db_t->origin_conn = PQconnectdbParams(keywords, origin_values, 0);
 	if (PQstatus(pg_db_t->origin_conn) != CONNECTION_OK) {
-		pr_debug_fd("Postgres origin-database connection: Failed!\n");
-		pr_error_fd("%s", PQerrorMessage(pg_db_t->origin_conn));
+		pr_debug_fd(pg_db_t->log_file,
+			    "Postgres origin-database connection: Failed!\n");
+		pr_error_fd(pg_db_t->log_file, "%s",
+			    PQerrorMessage(pg_db_t->origin_conn));
 
 		ret = -1;
 		return ret;
@@ -92,8 +102,10 @@ int connect_pg(struct db_t *pg_db_t)
 	// Connect to target-database.
 	pg_db_t->target_conn = PQconnectdbParams(keywords, target_values, 0);
 	if (PQstatus(pg_db_t->target_conn) != CONNECTION_OK) {
-		pr_debug_fd("Target-database connection: Failed!\n");
-		pr_error_fd("%s", PQerrorMessage(pg_db_t->target_conn));
+		pr_debug_fd(pg_db_t->log_file,
+			    "Target-database connection: Failed!\n");
+		pr_error_fd(pg_db_t->log_file, "%s",
+			    PQerrorMessage(pg_db_t->target_conn));
 
 		ret = -1;
 		return ret;
@@ -115,23 +127,23 @@ void close_pg(struct db_t *pg_db_t)
 			.to_len = ini_config->smtp_config->to_len,
 			.cc = (const char *const *)ini_config->smtp_config->cc,
 			.cc_len = ini_config->smtp_config->cc_len,
-			.filepath = ini_config->general_config->log_filepath,
+			.filepath = pg_db_t->log_filename,
 			.smtp_host = ini_config->smtp_config->smtp_host,
 			.smtp_username = ini_config->smtp_config->username,
 			.smtp_password = ini_config->smtp_config->password,
 		};
 		// set the file position indicator to start, so we can send the email
-		fseek(log_file, 0, SEEK_SET);
+		fseek(pg_db_t->log_file, 0, SEEK_SET);
 		int result = send_email(email_info);
 		if (result < 0) {
 			pr_error("Unable to send email.\n");
 		} else {
 			pr_info("Email was successfully sent!\n");
-			// set the file position at the end, to continue appending for other database systems
-			fseek(log_file, 0, SEEK_END);
 		}
 	}
 
+	fclose(pg_db_t->log_file);
+	free(pg_db_t->log_filename);
 	free(pg_db_t->pg_conf);
 	free(pg_db_t);
 }
@@ -155,14 +167,14 @@ void setup_command(char **pg_command_path, char **pg_pass, const char *command,
 }
 
 int exec_command(const char *pg_command_path, char *const args[], char *pg_pass,
-		 char *prefixed_command_path)
+		 char *prefixed_command_path, FILE *fp)
 {
 	char const *command_envp[3] = { pg_pass, prefixed_command_path, NULL };
 	int ret = execve_binary((char *)pg_command_path, args,
-				(char *const *)command_envp);
+				(char *const *)command_envp, fp);
 
 	if (ret != 0) {
-		pr_error_fd("`%s` failed\n", args[0]);
+		pr_error_fd(fp, "`%s` failed\n", args[0]);
 	}
 
 	return ret;
@@ -229,7 +241,7 @@ int replicate(struct db_t *pg_db_t)
 		pr_debug("$PG_BIN=%s was found.\n", pg_bin);
 		command_path_size = strlen(pg_bin) + 1;
 	} else {
-		pr_warn_fd("PG_BIN was not found.\n");
+		pr_warn_fd(pg_db_t->log_file, "PG_BIN was not found.\n");
 	}
 
 	strncat(prefixed_command_path, command_path, command_path_size + 1);
@@ -238,7 +250,7 @@ int replicate(struct db_t *pg_db_t)
 		      pg_db_t->pg_conf->password.origin, command_path,
 		      command_path_size, strlen(PG_DUMP_COMMAND));
 	ret = exec_command(pg_command_path, dump_args, pg_pass,
-			   prefixed_command_path);
+			   prefixed_command_path, pg_db_t->log_file);
 	if (ret != 0)
 		goto cleanup;
 
@@ -246,11 +258,12 @@ int replicate(struct db_t *pg_db_t)
 		      pg_db_t->pg_conf->password.target, command_path,
 		      command_path_size, strlen(PSQL_COMMAND));
 	ret = exec_command(pg_command_path, restore_args, pg_pass,
-			   prefixed_command_path);
+			   prefixed_command_path, pg_db_t->log_file);
 	if (ret != 0)
 		goto cleanup;
 
-	pr_info_fd("\nReplication of Postgres Database: `%s` was successful.\n",
+	pr_info_fd(pg_db_t->log_file,
+		   "\nReplication of Postgres Database: `%s` was successful.\n",
 		   pg_db_t->pg_conf->database.origin);
 cleanup:
 	free(pg_command_path);

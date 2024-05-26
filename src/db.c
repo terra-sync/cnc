@@ -29,14 +29,13 @@ int execute_db_operations(void)
 		if (db_ops_counter < MAX_AVAILABLE_DBS) {
 			int ret = init_function();
 			if (ret == -ENOMEM) {
-				pr_error_fd("Error allocating memory\n");
+				pr_error("Error allocating memory\n");
 				free(available_dbs);
 				return ret;
 			}
 			db_ops_counter++;
 		} else {
-			pr_info_fd(
-				"Max available database number was reached.\n"
+			pr_info("Max available database number was reached.\n"
 				"Executing replication for %ld database systems.\n",
 				db_ops_counter);
 			break;

@@ -1,5 +1,6 @@
 #include "log.h"
 
+#include "db/db.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
@@ -13,21 +14,18 @@
 
 bool verbose = false;
 
-FILE *log_file;
 extern config_t *ini_config;
+extern char *log_filepath;
 
-void construct_log_filename(char **log_filename, char *log_filepath)
+void construct_log_filename(char *log_filename, const char *log_name)
 {
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
 
-	sprintf(*log_filename, "%scnc%02d%02d%02d_%02d%02d%02d.log",
-		log_filepath, tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900,
-		tm.tm_hour, tm.tm_min, tm.tm_sec);
-
-	// Free the previously allocated memory before overwriting it with the `log_filename`
-	free((void *)ini_config->general_config->log_filepath);
-	ini_config->general_config->log_filepath = strdup(*log_filename);
+	snprintf(log_filename, PATH_MAX,
+		 "%scnc_%s_%02d%02d%02d%02d%02d%02d.log", log_filepath,
+		 log_name, tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900,
+		 tm.tm_hour, tm.tm_min, tm.tm_sec);
 }
 
 int construct_log_filepath(const char *config_filepath, char **log_filepath)
@@ -36,7 +34,6 @@ int construct_log_filepath(const char *config_filepath, char **log_filepath)
 
 	// If the user didn't specify a path, we create the `cnc` directory under `/var/log/`
 	if (config_filepath == NULL || strcmp(config_filepath, "") == 0) {
-		//stat(LOG_FILEPATH, &st);
 		if (access(LOG_FILEPATH, W_OK) == 0) {
 			ret = mkdir(LOG_DIRECTORY, 0777);
 			if (ret != 0 && errno != EEXIST) {

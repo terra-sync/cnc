@@ -28,6 +28,7 @@ int construct_pg(void);
  * Returns:
  *   0 Success
  *  -1 Failure to connect
+ *  -2 Error opening log file
  */
 int connect_pg(struct db_t *);
 void close_pg(struct db_t *pg_db_t);
