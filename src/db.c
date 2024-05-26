@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <sys/errno.h>
+#include <pthread.h>
 
 init_db_func init_functions[MAX_AVAILABLE_DBS];
 int num_init_functions = 0;
@@ -16,13 +17,31 @@ int num_init_functions = 0;
 struct db_operations **available_dbs;
 size_t db_ops_counter = 0;
 
+void *db_thread(void *arg)
+{
+	struct db_operations *db_ops = (struct db_operations *)arg;
+	struct db_t *available_db;
+
+	if (db_ops != NULL) {
+		available_db = db_ops->db;
+		int ret = db_ops->connect(available_db);
+		if (ret == 0) {
+			db_ops->replicate(available_db);
+		}
+		db_ops->close(available_db);
+	}
+
+	return NULL;
+}
+
 int execute_db_operations(void)
 {
 	int ret = 0;
-	struct db_t *available_db;
+	pthread_t threads[db_ops_counter];
+	init_db_func init_function;
+
 	available_dbs = (struct db_operations **)calloc(
 		MAX_AVAILABLE_DBS, sizeof(struct db_operations **));
-	init_db_func init_function;
 
 	section_foreach_entry(init_function)
 	{
@@ -43,18 +62,18 @@ int execute_db_operations(void)
 	}
 
 	for (int i = 0; i < db_ops_counter; i++) {
-		/* do db_operations for all available db impl. */
 		if (available_dbs[i] != NULL) {
-			available_db = available_dbs[i]->db;
-			ret = available_dbs[i]->connect(available_db);
-			if (ret == 0) {
-				available_dbs[i]->replicate(available_db);
-			}
-			available_dbs[i]->close(available_db);
+			pthread_create(&threads[i], NULL, db_thread,
+				       (void *)available_dbs[i]);
+		}
+	}
+
+	for (int i = 0; i < db_ops_counter; i++) {
+		if (available_dbs[i] != NULL) {
+			pthread_join(threads[i], NULL);
 		}
 	}
 
 	free(available_dbs);
-
-	return 0;
+	return ret;
 }
