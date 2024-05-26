@@ -1,7 +1,6 @@
 #ifndef DB_H
 #define DB_H
 
-#include <stdbool.h>
 #include <stdio.h>
 
 #include "config.h"
