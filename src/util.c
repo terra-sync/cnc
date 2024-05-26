@@ -7,8 +7,6 @@
 #include "util.h"
 #include "log.h"
 
-extern FILE *log_file;
-
 void format_buffer(char *buffer)
 {
 	int i = 0, num_of_new_lines = 0;
@@ -29,7 +27,7 @@ void format_buffer(char *buffer)
 }
 
 int execve_binary(char *command_path, char *const command_args[],
-		  char *const envp[])
+		  char *const envp[], FILE *fp)
 {
 	// A pipe to read the output from the process.
 	int pipefd[2];
@@ -37,7 +35,7 @@ int execve_binary(char *command_path, char *const command_args[],
 	int wstatus;
 
 	if (pipe(pipefd) == -1) {
-		pr_error_fd("Failure creating the pipe.\n");
+		pr_error_fd(fp, "Failure creating the pipe.\n");
 
 		return -2;
 	}
@@ -49,7 +47,7 @@ int execve_binary(char *command_path, char *const command_args[],
 		close(pipefd[WRITE_END]);
 
 		execve(command_path, command_args, envp);
-		pr_error_fd("Error executing `%s`\n", command_path);
+		pr_error_fd(fp, "Error executing `%s`\n", command_path);
 		pr_debug("`%s` error: %s\n", command_path, strerror(errno));
 
 		exit(EXIT_FAILURE);
@@ -58,15 +56,15 @@ int execve_binary(char *command_path, char *const command_args[],
 			pr_debug(
 				"`%s` process failed to start: %s.\n Replication process will be terminated.\n",
 				command_path, strerror(errno));
-			pr_error_fd("%s\n", strerror(errno));
+			pr_error_fd(fp, "%s\n", strerror(errno));
 
 			return -2;
 		}
 	}
 	close(pipefd[WRITE_END]);
 
-	if (read_buffer_pipe(pipefd) != 0) {
-		pr_error_fd("Error reading from pipe\n");
+	if (read_buffer_pipe(pipefd, fp) != 0) {
+		pr_error_fd(fp, "Error reading from pipe\n");
 		pr_debug("`read_buffer_pipe` error: %s\n", strerror(errno));
 	}
 
@@ -76,14 +74,14 @@ int execve_binary(char *command_path, char *const command_args[],
 		pr_debug(
 			"`%s` was unsuccessful. Replication process will be terminated.\n",
 			command_path);
-		pr_error_fd("`%s` was unsuccessful\r\n", command_path);
+		pr_error_fd(fp, "`%s` was unsuccessful\r\n", command_path);
 
 		return -1;
 	}
 	return 0;
 }
 
-int read_buffer_pipe(int *pipefd)
+int read_buffer_pipe(int *pipefd, FILE *fp)
 {
 	char buffer[4096] = { 0 };
 	int nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
@@ -93,7 +91,7 @@ int read_buffer_pipe(int *pipefd)
 	}
 
 	while (nbytes > 0) {
-		fprintf(log_file, "%s", buffer);
+		fprintf(fp, "%s", buffer);
 		memset(buffer, 0, sizeof(buffer));
 		nbytes = read(pipefd[READ_END], buffer, sizeof(buffer));
 
