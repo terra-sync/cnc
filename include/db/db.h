@@ -1,8 +1,10 @@
 #ifndef DB_H
 #define DB_H
 
-#include "config.h"
 #include <stdbool.h>
+#include <stdio.h>
+
+#include "config.h"
 
 #define MAX_AVAILABLE_DBS 10
 typedef int (*init_db_func)(void);
@@ -37,6 +39,9 @@ struct db_t {
 
 	void *origin_conn;
 	void *target_conn;
+
+	char *log_filename;
+	FILE *log_file;
 };
 
 /* struct db_operations

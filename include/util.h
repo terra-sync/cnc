@@ -35,7 +35,7 @@
  *  0 on success
  * -1 on failure reading from pipe
  */
-int read_buffer_pipe(int *);
+int read_buffer_pipe(int *, FILE *fp);
 
 /*
  * execve_binary
@@ -48,7 +48,7 @@ int read_buffer_pipe(int *);
  *  -2 Failure of creation of fork() or pipe()
  *
  */
-int execve_binary(char *, char *const[], char *const[]);
+int execve_binary(char *, char *const[], char *const[], FILE *fp);
 
 /*
  * This function is used to append a `\r` character before each `\n`, and it is needed
