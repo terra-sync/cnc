@@ -29,7 +29,7 @@ void help(void)
 	pr_info("  -f, --config-file <file>  Specify the config file to use\n");
 	pr_info("  -v, --verbose             Run in verbose mode\n");
 	pr_info("  -h, --help                Print this help message\n");
-	pr_info(" -V, --version Print the version information\n");
+	pr_info("  -V, --version             Print the version information\n");
 }
 
 int process_args(int argc, char **argv)
