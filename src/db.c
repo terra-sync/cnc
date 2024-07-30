@@ -2,7 +2,9 @@
 #include "db/postgres.h"
 #include "log.h"
 
+#if !defined(__APPLE__) || !defined(__MACH__)
 #include <bits/pthreadtypes.h>
+#endif
 #include <stdlib.h>
 #include <sys/errno.h>
 #include <pthread.h>

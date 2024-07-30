@@ -9,8 +9,6 @@
 
 #ifdef _POSIX_C_SOURCE
 #include <limits.h>
-#else
-#define PATH_MAX 4096
 #endif
 
 /* Write/Read end for pipes */

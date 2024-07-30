@@ -3,6 +3,7 @@
 
 #if defined(__APPLE__) && defined(__MACH__)
 #include <mach/error.h>
+#include <sys/syslimits.h> /* Needed for NAME_MAX, PATH_MAX */
 #else
 #include <error.h>
 #endif
