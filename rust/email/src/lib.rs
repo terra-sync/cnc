@@ -101,9 +101,17 @@ fn read_mail_body(filepath: &str) -> Result<String, io::Error> {
 /// ```
 #[no_mangle]
 pub extern "C" fn send_email(email_info: EmailInfo) -> i32 {
-	let from_str = c_char_to_string(email_info.from).unwrap();
+	let from_str = match c_char_to_string(email_info.from) {
+		Ok(s) => s,
+		Err(_) => return -1,
+	};
+
 	let filepath_str =
-		c_char_to_string(email_info.filepath).unwrap();
+		match c_char_to_string(email_info.filepath) {
+			Ok(s) => s,
+			Err(_) => return -1,
+		};
+
 	let body = match read_mail_body(&filepath_str) {
 		Ok(body) => body,
 		Err(error) => {
@@ -145,35 +153,62 @@ pub extern "C" fn send_email(email_info: EmailInfo) -> i32 {
 		}
 	};
 
-	let mut email_builder = Message::builder()
-		.from(from_str.parse().unwrap())
-		.subject("CNC digest")
-		.header(ContentType::TEXT_PLAIN);
+	let mut email_builder = match from_str.parse() {
+		Ok(parsed_from) => Message::builder()
+			.from(parsed_from)
+			.subject("CNC digest")
+			.header(ContentType::TEXT_PLAIN),
+		Err(_) => return -1,
+	};
 
 	for addr in to_strs.iter() {
-		email_builder = email_builder.to(addr.parse().unwrap());
+		match addr.parse() {
+			Ok(parsed_to) => {
+				email_builder = email_builder.to(parsed_to);
+			},
+			Err(_) => return -1,
+		}
 	}
 
 	if let Some(cc_strs) = cc_strs {
 		for cc_addr in cc_strs.iter() {
-			email_builder =
-				email_builder.cc(cc_addr.parse().unwrap());
+			match cc_addr.parse() {
+				Ok(parsed_cc) => {
+					email_builder = email_builder.cc(parsed_cc);
+				},
+				Err(_) => return -1,
+			}
 		}
 	};
 
-	let email = email_builder.body(body).unwrap();
+	let email = match email_builder.body(body) {
+		Ok(email) => email,
+		Err(_) => return -1,
+	};
 
-	let creds = Credentials::new(
-		c_char_to_string(email_info.smtp_username).unwrap(),
-		c_char_to_string(email_info.smtp_password).unwrap(),
-	);
+	let smtp_username =
+		match c_char_to_string(email_info.smtp_username) {
+			Ok(s) => s,
+			Err(_) => return -1,
+		};
 
-	let host_str =
-		c_char_to_string(email_info.smtp_host).unwrap();
-	let mailer = SmtpTransport::starttls_relay(&host_str)
-		.unwrap()
-		.credentials(creds)
-		.build();
+	let smtp_password =
+		match c_char_to_string(email_info.smtp_password) {
+			Ok(s) => s,
+			Err(_) => return -1,
+		};
+
+	let creds = Credentials::new(smtp_username, smtp_password);
+
+	let host_str = match c_char_to_string(email_info.smtp_host) {
+		Ok(s) => s,
+		Err(_) => return -1,
+	};
+
+	let mailer = match SmtpTransport::starttls_relay(&host_str) {
+		Ok(builder) => builder.credentials(creds).build(),
+		Err(_) => return -1,
+	};
 
 	match mailer.send(&email) {
 		Ok(_) => 0,
