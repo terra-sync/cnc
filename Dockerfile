@@ -26,7 +26,6 @@ RUN apt-get update && apt-get install -y \
     libpq5 libcurl4 libinih-dev
 
 COPY --from=builder /app/cnc /cnc
-COPY --from=builder /app/rust/email/target/debug/libemail.so rust/email/target/debug/libemail.so
 
 # Set the binary as the entrypoint of the container
 ENTRYPOINT ["/cnc"]

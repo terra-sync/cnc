@@ -12,7 +12,7 @@ fi
 docker_args_origin="--name cnc-postgres-origin -d \
 		  -e POSTGRES_PASSWORD=password   \
                   -e POSTGRES_DB=postgres_origin \
-		  -p 5432:5432 postgres:14"
+		  -p 5432:5432 postgres:15"
 
 if docker run $docker_args_origin; then
     echo "Postgres-origin container was successfully set up."
@@ -24,7 +24,7 @@ fi
 docker_args_target="--name cnc-postgres-target -d \
                     -e POSTGRES_PASSWORD=password \
                     -e POSTGRES_DB=postgres_target \
-                    -p 5433:5432 postgres:14"
+                    -p 5433:5432 postgres:15"
 
 if docker run $docker_args_target; then
     echo "Postgres-target container was successfully set up."

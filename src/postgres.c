@@ -17,8 +17,9 @@
 #include "db/db.h"
 #include "db/postgres.h"
 #include "log.h"
-#include "rust/email-bindings.h"
 #include "util.h"
+#include "email.h"
+#include <stdlib.h>
 
 extern config_t *ini_config;
 extern struct db_operations **available_dbs;
@@ -134,9 +135,9 @@ void close_pg(struct db_t *pg_db_t)
 	    ((postgres_node_t *)pg_db_t->db_conf)->email) {
 		EmailInfo email_info = {
 			.from = ini_config->smtp_config->from,
-			.to = (const char *const *)ini_config->smtp_config->to,
+			.to = (const char **)&ini_config->smtp_config->to,
 			.to_len = ini_config->smtp_config->to_len,
-			.cc = (const char *const *)ini_config->smtp_config->cc,
+			.cc = (const char **)&ini_config->smtp_config->cc,
 			.cc_len = ini_config->smtp_config->cc_len,
 			.filepath = pg_db_t->log_filename,
 			.smtp_host = ini_config->smtp_config->smtp_host,

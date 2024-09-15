@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <ini.h>
 
+#include "email.h"
 #include "log.h"
 #include "util.h"
 
@@ -184,6 +185,8 @@ int initialize_config(const char *config_file)
 	ini_config->smtp_config = CNC_MALLOC(sizeof(smtp_t));
 	ini_config->general_config = CNC_MALLOC(sizeof(general_t));
 	ini_config->general_config->log_filepath = NULL;
+
+	initialize_email_sender();
 
 	ret = ini_parse(config_file, handler, ini_config);
 	if (ret != 0) {
