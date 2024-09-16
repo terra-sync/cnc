@@ -2,6 +2,7 @@
 #define DB_H
 
 #include <stdio.h>
+#include <pthread.h>
 
 #include "config.h"
 
@@ -10,6 +11,7 @@ typedef int (*init_db_func)(void);
 
 extern init_db_func init_functions[MAX_AVAILABLE_DBS];
 extern int num_init_functions;
+extern pthread_mutex_t mutex;
 
 #define ADD_FUNC(init_func)                                               \
 	void __attribute__((constructor)) init_func##_register(void)      \
@@ -28,13 +30,13 @@ extern int num_init_functions;
 /* struct db_t
  * Holds the information every database will need.
  *
- * * postgres_t *pg_conf - inherited from the config
+ * * postgres_node_t *pg_conf - inherited from the config
  * * void *host_conn     - host connection, should be
  *                         allocated based on the target (e.g. PGconn *)
  * * void *target_conn   - target connection (same logic as host_conn)
  */
 struct db_t {
-	postgres_t *pg_conf;
+	void *db_conf;
 
 	void *origin_conn;
 	void *target_conn;
@@ -73,6 +75,14 @@ struct db_operations {
 	int (*replicate)(struct db_t *);
 };
 
+/*
+ * execute_db_operations
+ *
+ * Returns:
+ *   0 Success
+ *  -2 Error creating thread
+ *  -ENOMEM Error allocating memory
+ */
 int execute_db_operations(void);
 
 #endif

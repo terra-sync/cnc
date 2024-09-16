@@ -50,7 +50,8 @@ void test_missing_config(void)
 void test_backup_full(void)
 {
 	ini_config = (config_t *)malloc(sizeof(config_t));
-	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->postgres_config =
+		(postgres_node_t *)malloc(sizeof(postgres_node_t));
 	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
 	ini_parse_string("[postgres]\nbackup_type=full", handler, ini_config);
 	CU_ASSERT_EQUAL(ini_config->postgres_config->backup_type, FULL);
@@ -59,7 +60,8 @@ void test_backup_full(void)
 void test_backup_schema_only(void)
 {
 	ini_config = (config_t *)malloc(sizeof(config_t));
-	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->postgres_config =
+		(postgres_node_t *)malloc(sizeof(postgres_node_t));
 	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
 	ini_parse_string("[postgres]\nbackup_type=schema", handler, ini_config);
 	CU_ASSERT_EQUAL(ini_config->postgres_config->backup_type, SCHEMA);
@@ -69,7 +71,8 @@ void test_invalid_backup_type(void)
 {
 	int result;
 	ini_config = (config_t *)malloc(sizeof(config_t));
-	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->postgres_config =
+		(postgres_node_t *)malloc(sizeof(postgres_node_t));
 	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
 	result = ini_parse_string("[postgres]\nbackup_type=wrong_type", handler,
 				  ini_config);
@@ -80,7 +83,8 @@ void test_empty_backup_type(void)
 {
 	int result;
 	ini_config = (config_t *)malloc(sizeof(config_t));
-	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->postgres_config =
+		(postgres_node_t *)malloc(sizeof(postgres_node_t));
 	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
 	result = ini_parse_string("[postgres]\nbackup_type=", handler,
 				  ini_config);
@@ -109,7 +113,8 @@ void test_parse_log_filepath(void)
 {
 	int result;
 	ini_config = (config_t *)malloc(sizeof(config_t));
-	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->postgres_config =
+		(postgres_node_t *)malloc(sizeof(postgres_node_t));
 	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
 	ini_config->general_config = (general_t *)malloc(sizeof(general_t));
 	result = ini_parse_string("[general]\nlog_filepath=/var/log/cnc/",
@@ -122,7 +127,8 @@ void test_construct_log_filepath_wrong_path(void)
 	int result;
 	char *log_filepath = NULL;
 	ini_config = (config_t *)malloc(sizeof(config_t));
-	ini_config->postgres_config = (postgres_t *)malloc(sizeof(postgres_t));
+	ini_config->postgres_config =
+		(postgres_node_t *)malloc(sizeof(postgres_node_t));
 	ini_config->smtp_config = (smtp_t *)malloc(sizeof(smtp_t));
 	ini_config->general_config = (general_t *)malloc(sizeof(general_t));
 	ini_parse_string("[general]\nlog_filepath=var/log/cnc/", handler,

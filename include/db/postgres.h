@@ -17,6 +17,7 @@
  *
  *  Returns:
  *  0 on success
+ * -1 Maximum number of available databases reached
  * -ENOMEM Error allocating memory
  *
  */
@@ -33,5 +34,9 @@ int construct_pg(void);
 int connect_pg(struct db_t *);
 void close_pg(struct db_t *pg_db_t);
 int replicate(struct db_t *pg_db_t);
+
+bool is_enabled(void *);
+const char *get_origin(void *);
+void *get_next(void *);
 
 #endif

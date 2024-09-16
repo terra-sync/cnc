@@ -14,7 +14,7 @@ typedef enum backup_type {
 	FULL,
 } backup_type;
 
-typedef struct postgres_t {
+typedef struct postgres_node_t {
 	bool enabled;
 
 	d_str_t host;
@@ -25,7 +25,9 @@ typedef struct postgres_t {
 
 	backup_type backup_type;
 	bool email;
-} postgres_t;
+
+	struct postgres_node_t *next;
+} postgres_node_t;
 
 typedef enum auth_mode_t {
 	SSL = 1,
@@ -53,7 +55,7 @@ typedef struct general_t {
 } general_t;
 
 typedef struct config_t {
-	postgres_t *postgres_config;
+	postgres_node_t *postgres_config;
 	smtp_t *smtp_config;
 	general_t *general_config;
 } config_t;
