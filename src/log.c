@@ -8,6 +8,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#if defined(__APPLE__) && defined(__MACH__)
+#include <sys/syslimits.h> /* Needed for NAME_MAX, PATH_MAX. */
+#endif
 
 #include "util.h"
 #include "config.h"

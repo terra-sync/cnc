@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#if defined(__APPLE__) && defined(__MACH__)
+#include <sys/syslimits.h> /* Needed for NAME_MAX. */
+#endif
 
 #include "util.h"
 #include "log.h"
