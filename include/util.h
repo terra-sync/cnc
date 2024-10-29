@@ -19,14 +19,15 @@
 /* The log filename is of the format `cncDDMMYY_HHMMSS.log */
 #define LOG_FILE_SIZE_NAME 21;
 
-#define CNC_MALLOC(SIZE)                  \
-	({                                \
-		void *ptr = malloc(SIZE); \
-		if (ptr == NULL) {        \
-			return -ENOMEM;   \
-		}                         \
-		ptr;                      \
-	})
+static inline void *CNC_MALLOC(size_t size)
+{
+	void *ptr = malloc(size);
+	if (ptr == NULL) {
+		errno = ENOMEM;
+		return NULL;
+	}
+	return ptr;
+}
 
 /*
  *  read_buffer_pipe()
