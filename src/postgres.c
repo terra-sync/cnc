@@ -272,4 +272,4 @@ cleanup:
 	return ret;
 }
 
-ADD_FUNC(construct_pg);
+ADD_FUNC(construct_pg)
