@@ -37,7 +37,6 @@ void *db_operation_thread(void *arg)
 int execute_db_operations(void)
 {
 	int ret = 0;
-	pthread_t threads[db_ops_counter];
 	init_db_func init_function;
 
 	available_dbs = (struct db_operations **)calloc(
@@ -61,6 +60,7 @@ int execute_db_operations(void)
 		}
 	}
 
+	pthread_t threads[db_ops_counter];
 	for (int i = 0; i < db_ops_counter; i++) {
 		int ret = pthread_create(&threads[i], NULL, db_operation_thread,
 					 (void *)available_dbs[i]);
