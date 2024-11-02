@@ -48,6 +48,11 @@ AC_CHECK_LIB([pq], [PQconnectdb], [], [
   AC_MSG_ERROR([*** libpq is required but missing. ***])
 ])
 
+# Check for CUnit, needed for tests
+AC_CHECK_LIB([cunit], [CU_initialize_registry], [], [
+  AC_MSG_ERROR([*** libcunit1 is required but missing. ***])
+])
+
 # Checks for header files
 AC_CHECK_HEADERS([postgresql/libpq-fe.h])
 
