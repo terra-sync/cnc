@@ -53,7 +53,6 @@ AC_CHECK_HEADERS([postgresql/libpq-fe.h])
 
 # Adjusting CFLAGS and LDFLAGS
 CFLAGS="$CFLAGS -Iinclude -I/usr/include/postgresql/ -Wall -g -pedantic"
-LDFLAGS="$LDFLAGS -linih -lpq"
 
 AC_SUBST([COMMIT_HASH], [$(git rev-parse HEAD)])
 
