@@ -5,6 +5,7 @@
 #include "util.h"
 #include "log.h"
 
+#include <CUnit/CUnit.h>
 #include <stdlib.h>
 #include <ini.h>
 #include <stdint.h>
@@ -89,14 +90,22 @@ void test_empty_backup_type(void)
 
 void test_malloc_macro_success(void)
 {
-	void *result = CNC_MALLOC(10);
+	void *result;
+	CNC_MALLOC(result, 10);
 	CU_ASSERT_PTR_NOT_NULL(result);
 	free(result);
 }
 
 int return_result_of_malloc_macro(void)
 {
-	CNC_MALLOC(-1);
+	void *test;
+	CNC_MALLOC(test, -1);
+
+	/* This is needed in case the macro does not correctly return the -ENOMEM
+	 * If we remove this the `return_result_of_malloc_macro` function will return
+	 * -ENOMEM regardless of the success/failure of the macro.
+	 */
+	return 0;
 }
 
 void test_malloc_macro_failure(void)
