@@ -163,10 +163,10 @@ int initialize_config(const char *config_file)
 {
 	int ret = 0;
 
-	ini_config = CNC_MALLOC(sizeof(config_t));
-	ini_config->postgres_config = CNC_MALLOC(sizeof(postgres_t));
-	ini_config->smtp_config = CNC_MALLOC(sizeof(smtp_t));
-	ini_config->general_config = CNC_MALLOC(sizeof(general_t));
+	CNC_MALLOC(ini_config, sizeof(config_t));
+	CNC_MALLOC(ini_config->postgres_config, sizeof(postgres_t));
+	CNC_MALLOC(ini_config->smtp_config, sizeof(smtp_t));
+	CNC_MALLOC(ini_config->general_config, sizeof(general_t));
 	ini_config->general_config->log_filepath = NULL;
 
 	ret = ini_parse(config_file, handler, ini_config);

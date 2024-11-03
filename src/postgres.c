@@ -37,10 +37,11 @@ int construct_pg(void)
 		return -1; // not enabled, skip.
 	}
 
-	struct db_t *pg_db_t = CNC_MALLOC(sizeof(struct db_t));
+	struct db_t *pg_db_t;
+	CNC_MALLOC(pg_db_t, sizeof(struct db_t));
 
-	pg_db_t->pg_conf = CNC_MALLOC(sizeof(postgres_t));
-	pg_db_t->log_filename = CNC_MALLOC(sizeof(char) * (PATH_MAX + 1));
+	CNC_MALLOC(pg_db_t->pg_conf, sizeof(postgres_t));
+	CNC_MALLOC(pg_db_t->log_filename, sizeof(char) * (PATH_MAX + 1));
 	memcpy(pg_db_t->pg_conf, ini_config->postgres_config,
 	       sizeof(postgres_t));
 
