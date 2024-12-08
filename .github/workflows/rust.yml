@@ -1,0 +1,31 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "rust" ]
+  pull_request:
+    branches: [ "rust" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --verbose
+
+    - name: Install cargo-deb
+      uses: baptiste0928/cargo-install@v3
+      with:
+        crate: cargo-deb
+    - name: Package debian
+      run: cargo deb --no-strip --verbose
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v4
+      with:
+        name: debian-package
+        path: target/debian/cnc-rs*.deb
