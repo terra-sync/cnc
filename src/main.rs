@@ -3,7 +3,7 @@ pub mod config;
 pub mod db;
 pub mod logger;
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use db::{db_operations::DatabaseOperations, postgresdb::PostgresDB};
 use logger::init_logger;
@@ -22,6 +22,10 @@ fn main() -> Result<()> {
     let mut databases: Vec<Box<dyn DatabaseOperations>> = Vec::new();
     if config.postgres.enabled {
         databases.push(Box::new(PostgresDB::new(config)));
+    }
+
+    if databases.len().eq(&0) {
+        return Err(anyhow!("No databases are enabled in the configuration"));
     }
 
     for mut db in databases {
