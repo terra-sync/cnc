@@ -4,11 +4,11 @@ origin_host = "localhost"
 origin_user = "postgres"
 origin_password = "password"
 origin_port = "5432"
-origin_database = "postgres"
+origin_database = "postgres_origin"
 
 target_host = "localhost"
 target_user = "postgres"
 target_password = "password"
 target_port = "5433"
-target_database = "postgres"
+target_database = "postgres_origin"
 

@@ -97,38 +97,38 @@ impl DatabaseOperations for PostgresDB {
             return Err(anyhow::anyhow!("Target client is not connected"));
         }
 
-        let dump_file_path = "/tmp/pg_dumpall.sql";
+        let dump_file_path = "/tmp/clean_dump.sql";
 
-        let dump_output: Output = Command::new("pg_dumpall")
+        let dump_output: Output = Command::new("pg_dump")
+            .env("PGPASSWORD", &self.config.origin_password)
             .arg("-U")
             .arg(&self.config.origin_user)
             .arg("-h")
             .arg(&self.config.origin_host)
             .arg("-p")
             .arg(&self.config.origin_port)
-            .arg("-l")
             .arg(&self.config.origin_database)
-            .arg("-v") // Verbose mode
+            .arg("-v")
+            .arg("--clean")
             .arg("-f")
             .arg(dump_file_path)
-            .env("PGPASSWORD", &self.config.origin_password)
             .output()
-            .context("Failed to start pg_dumpall process")?;
+            .context("Failed to start pg_dump process")?;
 
         if !dump_output.stdout.is_empty() {
             info!(
-                "pg_dumpall stdout:\n{}",
+                "pg_dump stdout:\n{}",
                 String::from_utf8_lossy(&dump_output.stdout)
             );
         }
         if !dump_output.stderr.is_empty() {
             warn!(
-                "pg_dumpall stderr:\n{}",
+                "pg_dump stderr:\n{}",
                 String::from_utf8_lossy(&dump_output.stderr)
             );
         }
         if !dump_output.status.success() {
-            return Err(anyhow!("pg_dumpall process exited with an error"));
+            return Err(anyhow!("pg_dump process exited with an error"));
         }
         info!("Data successfully dumped to {}", dump_file_path);
 
@@ -139,10 +139,10 @@ impl DatabaseOperations for PostgresDB {
             .arg(&self.config.target_port)
             .arg("-U")
             .arg(&self.config.target_user)
+            .arg("-d")
+            .arg(&self.config.origin_database)
             .arg("-f")
             .arg(dump_file_path)
-            .arg("-v")
-            .arg("ON_ERROR_STOP=0")
             .env("PGPASSWORD", &self.config.target_password)
             .output()
             .context("Failed to start psql process for restoring")?;
