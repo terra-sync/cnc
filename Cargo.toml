@@ -7,9 +7,11 @@ authors = ["Charalampos Mitrodimas"]
 
 [dependencies]
 anyhow = "1.0.94"
+chrono = "0.4.39"
 clap = { version = "4.5.23", features = ["derive"] }
 env_logger = "0.11.5"
 lazy_static = "1.5.0"
+lettre = { version = "0.11.11", features = ["serde"] }
 log = "0.4.22"
 postgres = "0.19.9"
 serde = { version = "1.0.215", features = ["derive"] }
