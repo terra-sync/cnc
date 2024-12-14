@@ -8,4 +8,7 @@ pub struct Cli {
 
     #[arg(long)]
     pub verbose: bool,
+
+    #[arg(long)]
+    pub email: Option<bool>,
 }

@@ -16,9 +16,16 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     init_logger(cli.verbose);
 
-    let config: Config = toml::from_str(&fs::read_to_string(&cli.config_file)?)
+    let mut config: Config = toml::from_str(&fs::read_to_string(&cli.config_file)?)
         .context("Failed to parse configuration file")?;
 
+    // Override config fields if flags are found;
+    if let Some(smtp) = config.smtp.as_mut() {
+        if let Some(email_flag) = cli.email {
+            smtp.enabled = email_flag;
+        }
+        println!("{:?}", config.smtp);
+    }
     let mut databases: Vec<Box<dyn DatabaseOperations>> = Vec::new();
     if config.postgres.enabled {
         databases.push(Box::new(PostgresDB::new(config)));
