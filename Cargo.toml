@@ -1,9 +1,21 @@
 [package]
 name = "cnc-rs"
-version = "0.1.0"
+version = "0.1.1"
+rust-version = "1.81"
 edition = "2021"
 license = "MIT"
 authors = ["Charalampos Mitrodimas"]
+homepage = "https://github.com/terra-sync/cnc/tree/rust"
+repository = "https://github.com/terra-sync/cnc/tree/rust"
+description = """
+A Rust-based project for PostgreSQL replication and email notifications with a configurable CLI.
+"""
+
+[[bin]]
+name = "cnc"
+path = "src/main.rs"
+test = false
+bench = false
 
 [dependencies]
 anyhow = "1.0.94"
