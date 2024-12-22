@@ -5,8 +5,8 @@ rust-version = "1.81"
 edition = "2021"
 license = "MIT OR GPL-3.0"
 authors = ["Charalampos Mitrodimas"]
-homepage = "https://github.com/terra-sync/cnc/tree/rust"
-repository = "https://github.com/terra-sync/cnc/tree/rust"
+homepage = "https://github.com/terra-sync/cnc"
+repository = "https://github.com/terra-sync/cnc"
 description = """
 A Rust-based project for PostgreSQL replication and email notifications with a configurable CLI.
 """
