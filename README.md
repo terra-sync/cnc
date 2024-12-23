@@ -16,7 +16,7 @@ CNC-RS is a Rust-based application for PostgreSQL database replication, configur
 
 ### Using `cargo install`
 
-If your project is published to [crates.io](https://crates.io), install it using Cargo:
+Install it using Cargo:
 
 ```bash
 cargo install cnc-rs
