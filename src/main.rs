@@ -1,14 +1,9 @@
-pub mod cli;
-pub mod config;
-pub mod db;
-pub mod logger;
-
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
-use db::{db_operations::DatabaseOperations, postgresdb::PostgresDB};
-use logger::init_logger;
+use cnc_rs::db::{db_operations::DatabaseOperations, postgresdb::PostgresDB};
+use cnc_rs::logger::init_logger;
 
-use crate::{cli::Cli, config::Config};
+use cnc_rs::{cli::Cli, config::Config};
 
 use std::fs::{self};
 
