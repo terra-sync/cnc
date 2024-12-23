@@ -1,6 +1,6 @@
 # CNC-RS
 
-CNC-RS is a Rust-based application for PostgreSQL database replication, configurable through a TOML file and a command-line interface (CLI). It features a robust logging system and optional email notifications to streamline database operations and ensure reliability. 
+CNC-RS is a Rust-based application for PostgreSQL database replication, configurable through a TOML file and a command-line interface (CLI). It features a robust logging system and optional email notifications to streamline database operations and ensure reliability.
 
 ## Features
 
@@ -150,8 +150,6 @@ To contribute or modify this project:
 
 ## License
 
-## License
-
 This project is licensed under the terms of both the MIT license and
 the GPL-3.0. See the [LICENSE-MIT](LICENSE-MIT) and
 [LICENSE-GPL-3.0](LICENSE-GPL-3.0) files for details.
@@ -170,5 +168,11 @@ the GPL-3.0. See the [LICENSE-MIT](LICENSE-MIT) and
 
 ## Contributing
 
-We welcome contributions to CNC-RS! Feel free to open issues or submit pull requests on [GitHub](https://github.com/yourusername/cnc-rs).
+###  Mailing Lists
 
+For bugs, patches, or help, please reach out through our [groups.io](https://groups.io/g/cnc):
+* Post: cnc@groups.io
+* Subscribe: cnc+subscribe@groups.io
+* Unsubscribe: cnc+unsubscribe@groups.io
+* Group Owner: cnc+owner@groups.io
+* Help: cnc+help@groups.io
