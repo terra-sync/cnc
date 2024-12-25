@@ -1,9 +1,25 @@
+//! Logging functionality for the database replication tool.
+
 use env_logger::{Builder, Env};
 use std::{
     fs::File,
     io::{self, Write},
 };
 
+/// Initializes the logging system with optional verbose mode and file output.
+///
+/// # Arguments
+///
+/// * `verbose` - When true, logs are written to both stdout and a file named "output.log".
+///               When false, logs are only written to stdout.
+///
+/// # Example
+///
+/// ```
+/// use crate::logger::init_logger;
+///
+/// init_logger(true); // Enable verbose logging
+/// ```
 pub fn init_logger(verbose: bool) {
     let env = Env::default()
         .filter_or("MY_LOG_LEVEL", "info")
@@ -35,7 +51,9 @@ pub fn init_logger(verbose: bool) {
     builder.init();
 }
 
-/// A writer that duplicates output to stdout and a log file.
+/// A writer implementation that duplicates output to both stdout and a log file.
+///
+/// This struct is used internally by the logger when verbose mode is enabled.
 pub struct DualWriter {
     stdout: io::Stdout,
     log_file: File,

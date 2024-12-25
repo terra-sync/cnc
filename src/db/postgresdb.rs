@@ -1,3 +1,5 @@
+//! PostgreSQL database implementation.
+
 use anyhow::{anyhow, Context, Error};
 use chrono::Local;
 use log::{info, warn};
@@ -7,6 +9,7 @@ use std::process::{Command, Output};
 use super::db_operations::DatabaseOperations;
 use crate::config::{email::SMTP, postgres::Postgres, Config};
 
+/// Implementation of database operations for PostgreSQL.
 pub struct PostgresDB {
     config_postgres: Postgres,
     config_email: Option<SMTP>,
@@ -15,6 +18,11 @@ pub struct PostgresDB {
 }
 
 impl PostgresDB {
+    /// Creates a new PostgreSQL database handler with the given configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `conf` - Configuration containing PostgreSQL and optional SMTP settings
     pub fn new(conf: Config) -> Self {
         Self {
             config_postgres: conf.postgres,
@@ -26,6 +34,7 @@ impl PostgresDB {
 }
 
 impl DatabaseOperations for PostgresDB {
+    /// Connects to both source and target PostgreSQL databases.
     fn connect(&mut self) -> Result<(), Error> {
         info!("Connecting to {}", self.config_postgres.origin_host);
         self.origin_client = Some(
@@ -73,6 +82,7 @@ impl DatabaseOperations for PostgresDB {
         Ok(())
     }
 
+    /// Closes connections to both source and target databases.
     fn close(&mut self) -> Result<(), Error> {
         info!("Disconnecting from {}", self.config_postgres.origin_host);
         if let Some(origin_client) = self.origin_client.take() {
@@ -86,6 +96,12 @@ impl DatabaseOperations for PostgresDB {
         Ok(())
     }
 
+    /// Replicates data from source to target database using pg_dump and psql.
+    ///
+    /// This function:
+    ///   1. Dumps the source database to a temporary file
+    ///   2. Restores the dump file to the target database
+    ///   3. Optionally sends an email notification with the results
     fn replicate(&mut self) -> Result<(), Error> {
         let mut output_log = String::new();
 

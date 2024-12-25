@@ -1,3 +1,5 @@
+//! Email notification functionality using SMTP.
+
 use anyhow::Result;
 use lettre::{
     message::{header::ContentType, Mailbox},
@@ -7,21 +9,38 @@ use lettre::{
 
 use serde::Deserialize;
 
+/// SMTP configuration for sending email notifications.
 #[derive(Deserialize, Debug)]
 pub struct SMTP {
+    /// Whether email notifications are enabled
     pub enabled: bool,
-
+    /// SMTP username
     pub username: String,
+    /// SMTP password
     pub password: String,
+    /// SMTP server hostname
     pub smtp_host: String,
+    /// SMTP server port
     pub smtp_port: u16,
-
+    /// Email sender address
     pub from: String,
+    /// List of recipient email addresses
     pub to: Vec<String>,
+    /// Optional list of CC recipient addresses
     pub cc: Option<Vec<String>>,
 }
 
 impl SMTP {
+    /// Sends an email with the given subject and body.
+    ///
+    /// # Arguments
+    ///
+    /// * `subject` - Email subject line
+    /// * `body` - Email body content
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the email was sent successfully, or an error if sending failed.
     pub fn send_email(&self, subjet: String, body: String) -> Result<()> {
         let from_address: Mailbox = self.from.parse()?;
         let to_addresses: Vec<Mailbox> = self
