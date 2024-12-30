@@ -14,7 +14,7 @@ impl Default for BackupType {
 
 #[derive(Deserialize)]
 pub struct Postgres {
-    #[serde(default = "default_enabled")]
+    #[serde(default = "Postgres::default_enabled")]
     pub enabled: bool,
 
     pub origin_host: String,
@@ -32,15 +32,17 @@ pub struct Postgres {
     #[serde(default = "BackupType::default")]
     pub backup_type: BackupType,
 
-    #[serde(default = "default_email")]
+    #[serde(default = "Postgres::default_email")]
     pub email: bool,
 }
 
-// Default value functions
-pub fn default_enabled() -> bool {
-    true
-}
+impl Postgres {
+    // Default value functions
+    pub fn default_enabled() -> bool {
+        true
+    }
 
-pub fn default_email() -> bool {
-    false
+    pub fn default_email() -> bool {
+        false
+    }
 }
